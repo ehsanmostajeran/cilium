@@ -51,7 +51,7 @@ requirements:
 
 Make sure you have all requirements checked.
 
-* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | sh -s check`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | bash -s check`
 
 ### Preparing node
 
@@ -59,7 +59,7 @@ You can skip this step but we don't recommend it to skip it since it will allow
 a faster deployment of cilium's components on the specific node. This step will
 pull all docker images that we'll be using on the next steps.
 
-* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | sh -s prepare`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | bash -s prepare`
 
 ### Infecting a node
 
@@ -84,9 +84,9 @@ following environment variables:
 
 In our example we have:
 
-* `# curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | NET_IP=192.168.50.0/24 IP=192.168.50.37 sh -s infect`
+* `# curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | NET_IP=192.168.50.0/24 IP=192.168.50.37 bash -s infect`
 
-* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | NET_IP=<node's network address> IP=<node's IP address> sh -s infect`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | NET_IP=<node's network address> IP=<node's IP address> bash -s infect`
 
 If you only have one node in your cluster that's ok, you can go to [starting services](#starting-services)
 to continue.
@@ -102,9 +102,9 @@ one as `MASTER_IP`.
 
 In our example we have:
 
-* `# curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | MASTER_IP=192.168.50.38 IP=192.168.50.37 sh -s infect`
+* `# curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | MASTER_IP=192.168.50.38 IP=192.168.50.37 bash -s infect`
 
-* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | MASTER_IP=<An already infected node's IP address> IP=<node's IP address> sh -s infect`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | MASTER_IP=<An already infected node's IP address> IP=<node's IP address> bash -s infect`
 
 At this point you should have 9 containers on each node. For example, in one of
 the nodes we have:
@@ -131,7 +131,7 @@ step.
 Now that we have our cluster ready to receive some containers , we can run some
 services such as a load balancer and a DNS.
 
-* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | sh -s start-services`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | bash -s start-services`
 
 Now you should have 2 more containers running in your cluster:
 ```
@@ -154,8 +154,8 @@ To continue this demo please make sure you've [docker-compose](https://docs.dock
 
 Get the following files:
 ```bash
-$ curl -Ssl -o docker-compose.yml https://github.com/cilium-team/cilium/raw/contrib/examples/compose/docker-compose.yml`
-$ curl -Ssl -o app-policy.yml https://github.com/cilium-team/cilium/raw/contrib/examples/compose/app-policy.yml
+$ curl -Ssl -o docker-compose.yml https://raw.githubusercontent.com/cilium-team/cilium/master/examples/compose/docker-compose.yml
+$ curl -Ssl -o app-policy.yml https://raw.githubusercontent.com/cilium-team/cilium/master/examples/compose/app-policy.yml
 ```
 
 Inside that directory you should have:
@@ -180,10 +180,11 @@ written the $PWD*
 Now run `DOCKER_HOST=127.0.0.1:2375 docker-compose up -d`, this will start
 both services (`redis` and `web`).
 ```bash
-$ DOCKER_HOST=127.0.0.1:2375 docker ps -a --filter=name=compose
+$ DOCKER_HOST=127.0.0.1:2375 docker ps -a
 CONTAINER ID        IMAGE                    COMMAND                  CREATED             STATUS              PORTS               NAMES
 168640ceb0ae        cilium/compose-example   "python app.py"          2 minutes ago       Up 2 minutes                            node1/compose_web_1
 2d5b35eb1dd5        redis                    "/entrypoint.sh redis"   3 minutes ago       Up 3 minutes                            node1/compose_redis_1
+...
 ```
 *If redis is running in your physical machine and you have a firewall enabled,
 you must open port 6379*
@@ -247,7 +248,7 @@ container.
 
 You can see those statistics them by running:
 
-* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | IP=<node's IP address> sh -s start-kibana`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | IP=<node's IP address> bash -s start-kibana`
 
 * Open your browser in [kibana's dashboard](http://127.0.0.1:5601/#/dashboard/Cilium-dashboard?_g=(refreshInterval:(display:'30%20seconds',pause:!f,section:1,value:30000),time:(from:now-15m,mode:quick,to:now))&_a=(filters:!(),query:(query_string:(analyze_wildcard:!t,query:'*')),title:Cilium-dashboard))
 
