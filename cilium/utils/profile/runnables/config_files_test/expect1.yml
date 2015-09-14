@@ -1,0 +1,32 @@
+---
+policy-source:
+  -
+    policies:
+      -
+        name: "Convering a service that has svc_dns"
+        coverage:
+          labels:
+            com.intent.service: svc_dns
+        intent-config:
+          config:
+            net-conf:
+              br: "lxc-br0"
+              cidr: "1.1.0.7/24"
+              gw: "1.1.0.254"
+            net-policy:
+              ovs-config:
+                ovs-config-files:
+                  - "operator-ovs-intent-dns-container.yml"
+                  - "operator-ovs-intent-dns.yml"
+            add-to-dns: false
+            max-scale: 1
+            remove-docker-links: false
+        docker-config:
+          config:
+            Hostname: "dns"
+          host-config:
+            Hostname: "dns"
+            NetworkMode: "none"
+            Dns:
+              - "8.8.8.8"
+              - "8.8.4.4"

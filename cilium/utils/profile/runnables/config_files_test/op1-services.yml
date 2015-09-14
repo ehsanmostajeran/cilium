@@ -1,0 +1,18 @@
+---
+policy-source:
+  -
+    owner: operator1
+    policies:
+      -
+        name: "Remove Docker Links From Services"
+        coverage:
+          labels:
+            com.intent.service: ^svc_\.*
+        intent-config:
+          priority: 500
+          config:
+            remove-docker-links: true
+        docker-config:
+          priority: 250
+          host-config:
+            NetworkMode: "none"

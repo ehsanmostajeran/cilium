@@ -1,0 +1,140 @@
+---
+policy-source:
+  -
+    owner: governance
+    policies:
+      -
+        name: "DNSConfig"
+        coverage:
+          labels:
+            com.intent.service: ^svc_dns$
+        intent-config:
+          priority: 1000
+          config:
+            net-conf:
+              cidr: "1.1.0.252/25"
+              gw: "192.0.2.1"
+              route: "192.168.50.0/24 via 172.17.42.1"
+            add-to-dns: false
+            max-scale: 1
+            add-arguments:
+              - "--docker"
+              - "tcp://$public-ip:2373"
+              - "--verbose"
+              - "--no-recursion"
+        docker-config:
+          priority: 1000
+          config:
+            Hostname: "dns"
+            Env:
+              - "affinity:image==cilium/docker-dns-rest:1.0-rr-with-del"
+              - "affinity:com.intent.service==gov_swarm_events"
+          host-config:
+            Hostname: "dns"
+            NetworkMode: "bridge"
+            RestartPolicy:
+              Name: "always"
+            Dns:
+              - "8.8.8.8"
+              - "8.8.4.4"
+      -
+        name: "HAProxyConfig"
+        coverage:
+          labels:
+            com.intent.service: ^svc_loadbalancer$
+        intent-config:
+          priority: 1000
+          config:
+            net-conf:
+              cidr: "1.1.0.251/25"
+              gw: "192.0.2.1"
+              route: "192.168.50.0/24 via 172.17.42.1"
+            add-to-dns: false
+            max-scale: 1
+        docker-config:
+          priority: 1000
+          config:
+            Hostname: "haproxy"
+          host-config:
+            Hostname: "haproxy"
+            NetworkMode: "bridge"
+            RestartPolicy:
+              Name: "always"
+            Dns:
+              - "8.8.8.8"
+              - "8.8.4.4"
+      -
+        name: "Swarm events container for DNS"
+        coverage:
+          labels:
+            com.intent.service: ^gov_swarm_events$
+        intent-config:
+          priority: 1000
+          config:
+            remove-docker-links: true
+            add-to-dns: false
+            hostname-is:
+              value-of-label: ^com\.intent\.logical-name$
+        host-config:
+          RestartPolicy:
+            Name: "always"
+      -
+        name: "Elastic search config"
+        coverage:
+          labels:
+            com.intent.service: ^gov_db$
+        intent-config:
+          priority: 1000
+          config:
+            remove-docker-links: true
+            hostname-is:
+              value-of-label: ^com\.intent\.logical-name$
+            add-to-dns: false
+        docker-config:
+          host-config:
+            NetworkMode: "host"
+            RestartPolicy:
+              Name: "always"
+      -
+        name: "Workload defaults for compose"
+        coverage:
+          labels:
+            com.docker.compose.service: \.*
+        intent-config:
+          priority: 800
+          config:
+            add-to-dns: true
+            remove-docker-links: true
+            net-conf:
+              gw: "192.0.2.1"
+            remove-port-bindings: true
+            hostname-is:
+              value-of-label: ^com\.docker\.compose\.service$
+        docker-config:
+          host-config:
+            NetworkMode: "none"
+            Dns:
+              - "1.1.0.252"
+      -
+        name: "Debug Shell"
+        coverage:
+          labels:
+            com.intent.service: ^debug$
+        intent-config:
+          priority: 800
+          config:
+            add-to-dns: false
+            remove-docker-links: true
+            net-conf:
+              cidr: "3.0.0.0/16"
+              gw: "192.0.2.1"
+              group: 1000
+            remove-port-bindings: true
+            hostname-is:
+              value-of-label: ^com\.intent\.service$
+        docker-config:
+          priority: 800
+          host-config:
+            NetworkMode: "none"
+            Dns:
+              - "1.1.0.252"

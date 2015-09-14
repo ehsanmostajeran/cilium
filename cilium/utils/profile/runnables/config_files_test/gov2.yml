@@ -1,0 +1,24 @@
+---
+policy-source:
+  -
+    owner: governator
+    policies:
+      -
+        name: "DNS config for all containers"
+        coverage:
+          labels:
+            com.intent.service: \.*
+        intent-config:
+          priority: 500
+          config:
+            net-policy:
+              ovs-config:
+                ovs-config-files:
+                  - "operator-ovs-intent-dns.yml"
+            add-to-dns: true
+        docker-config:
+          priority: 500
+          host-config:
+            NetworkMode: "none"
+            Dns:
+              - "1.1.0.7"

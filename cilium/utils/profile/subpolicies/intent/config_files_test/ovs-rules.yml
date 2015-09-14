@@ -1,0 +1,4 @@
+---
+ovs-rules:
+  - 'priority=100,ip,nw_src=1.1.0.252,actions=NORMAL'
+  - 'priority=100,ip,nw_dst=1.1.0.252,actions=NORMAL'

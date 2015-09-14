@@ -1,0 +1,13 @@
+debug-shell
+examples
+external-deps
+Godeps
+images
+policy
+vagrant
+Dockerfile
+Dockerfile.binary
+Makefile
+Vagrantfile
+cilium/
+.*

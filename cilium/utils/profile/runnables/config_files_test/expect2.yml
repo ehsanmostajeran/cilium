@@ -1,0 +1,29 @@
+---
+policy-source:
+  -
+    policies:
+      -
+        name: "Covering svc_web"
+        coverage:
+          labels:
+            com.intent.service: svc_web
+        intent-config:
+          config:
+            net-conf:
+              br: "lxc-br0"
+              cidr: "1.1.0.0/25"
+              gw: "1.1.0.126"
+            net-policy:
+              ovs-config:
+                ovs-config-files:
+                  - "operator-ovs-intent-web-service.yml"
+                  - "operator-ovs-intent-dns.yml"
+            max-scale: 4
+            remove-docker-links: true
+            hostname-is:
+              value-of-label: ^com\.intent\.logical-name$
+        docker-config:
+          host-config:
+            NetworkMode: "none"
+            Dns:
+              - "1.1.0.7"

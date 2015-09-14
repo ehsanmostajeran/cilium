@@ -1,0 +1,45 @@
+---
+policy-source:
+  -
+    # Policies owner
+    owner: operator
+    # Array of policies
+    policies:
+      -
+        # Policy name
+        name: "Web Service"
+        # Policy coverage based on docker running labels
+        coverage:
+          labels:
+            com.docker.compose.service: ^web$
+        # Intent configuration
+        intent-config:
+          priority: 250
+          config:
+            # Net config for containers that will be covered by the coverage
+            # above
+            net-conf:
+              # IP address or pool of IPs
+              cidr: "1.1.0.0/25"
+              # Network group to enforce rules
+              group: 100
+            # Enforcement of the max number of containers running with that
+            # label
+            max-scale: 4
+            # Load balancing this service with the help of ha-proxy
+            load-balancer:
+              name: "ha-proxy"
+              traffic-type: "http"
+              bind-port: 5000
+      -
+        name: "Redis Service"
+        coverage:
+          labels:
+            com.docker.compose.service: ^redis$
+        intent-config:
+          priority: 250
+          config:
+            net-conf:
+              cidr: "1.1.0.128/25"
+              group: 200
+            max-scale: 2

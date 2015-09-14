@@ -1,0 +1,24 @@
+---
+policy-source:
+  -
+    owner: operator2
+    policies:
+      -
+        name: "Web Service"
+        coverage:
+          labels:
+            com.intent.service: ^svc_web$
+        intent-config:
+          priority: 250
+          config:
+            net-conf:
+              br: "lxc-br0"
+              cidr: "1.1.0.0/25"
+              gw: "1.1.0.126"
+            max-scale: 4
+            net-policy:
+              ovs-config:
+                ovs-config-files:
+                  - "operator-ovs-intent-web-service.yml"
+            hostname-is:
+              value-of-label: ^com\.intent\.logical-name$

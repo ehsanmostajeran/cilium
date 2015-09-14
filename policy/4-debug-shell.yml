@@ -1,0 +1,28 @@
+---
+policy-source:
+  -
+    owner: governance
+    policies:
+      -
+        name: "Debug Shell"
+        coverage:
+          labels:
+            com.intent.service: ^debug$
+        intent-config:
+          priority: 800
+          config:
+            add-to-dns: false
+            remove-docker-links: true
+            net-conf:
+              cidr: "3.0.0.0/16"
+              gw: "192.0.2.1"
+              group: 1000
+            remove-port-bindings: true
+            hostname-is:
+              value-of-label: ^com\.intent\.service$
+        docker-config:
+          priority: 800
+          host-config:
+            NetworkMode: "none"
+            Dns:
+              - "1.1.0.252"

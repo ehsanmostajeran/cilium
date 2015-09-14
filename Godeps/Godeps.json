@@ -1,0 +1,50 @@
+{
+	"ImportPath": "github.com/cilium-team/cilium",
+	"GoVersion": "go1.5.1",
+	"Packages": [
+		"./..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/ant0ine/go-json-rest/rest",
+			"Comment": "v3.2.0-11-g2af9d00",
+			"Rev": "2af9d0034afcd83101abb1945f2a65ddbd563719"
+		},
+		{
+			"ImportPath": "github.com/cilium-team/go-logging",
+			"Rev": "718ce742417921446b4aa9f3f8315b3e7f5c06b0"
+		},
+		{
+			"ImportPath": "github.com/cilium-team/mergo",
+			"Comment": "0.2.0-4-g87cdd01",
+			"Rev": "87cdd01a5b33125b07801cd10716765a050c9a70"
+		},
+		{
+			"ImportPath": "github.com/deckarep/golang-set",
+			"Comment": "v1-28-g52ba7f2",
+			"Rev": "52ba7f28f319e9d560acbf47c7fcf9b9ee7aa7d3"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/units",
+			"Comment": "v1.4.1-6170-gdac92a8",
+			"Rev": "dac92a8afbe0900641afa00e33e84e180d432239"
+		},
+		{
+			"ImportPath": "github.com/fsouza/go-dockerclient",
+			"Rev": "c9ad0ce23f68428421adfc6ced9e6123f54788a5"
+		},
+		{
+			"ImportPath": "github.com/samalba/dockerclient",
+			"Rev": "cfb489c624b635251a93e74e1e90eb0959c5367f"
+		},
+		{
+			"ImportPath": "gopkg.in/olivere/elastic.v2",
+			"Comment": "v2.0.7",
+			"Rev": "34055ce91f8c34ab593d35cc77fedd41b7b08baa"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "7ad95dd0798a40da1ccdff6dff35fd177b5edf40"
+		}
+	]
+}

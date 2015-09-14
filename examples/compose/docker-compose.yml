@@ -1,0 +1,9 @@
+web:
+  image: cilium/compose-example
+  command: python app.py
+  ports:
+   - "5000:5000"
+  links:
+   - redis
+redis:
+  image: redis
