@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
 	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
@@ -64,5 +65,16 @@ func SplitLink(link string) (container, alias string) {
 		return "/" + split[0], ""
 	default:
 		return "/" + link, ""
+	}
+}
+
+func WaitForDockerReady(dClient Docker, timeout int) error {
+	for {
+		err := dClient.Ping()
+		if err == nil || timeout < 0 {
+			return err
+		}
+		timeout--
+		time.Sleep(1 * time.Second)
 	}
 }

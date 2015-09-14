@@ -21,6 +21,7 @@ import (
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/ant0ine/go-json-rest/rest"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
+	dfsouza "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
 	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/samalba/dockerclient"
 )
 
@@ -145,15 +146,15 @@ func main() {
 		}
 	}
 
+	dbConn, err := ucdb.NewConn()
+	if err != nil {
+		log.Error("%+v", err)
+	}
 	if events {
 		dockerclient, err := uc.NewDockerClientSamalba()
 		if err != nil {
 			log.Error("Error: %s", err)
 			return
-		}
-		dbConn, err := ucdb.NewConn()
-		if err != nil {
-			log.Error("%+v", err)
 		}
 
 		log.Info("Trying to get docker client info")
@@ -194,8 +195,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("%s", err)
 	}
+	dockerclient, err := uc.NewDockerClient()
+	if err != nil {
+		log.Error("%s", err)
+	}
 	api.SetApp(router)
 	log.Info("cilium has started")
+	log.Info("Updating state based on the other nodes")
+	if err := updateEndpoints(dockerclient, dbConn); err != nil {
+		log.Error("Error while updating state from other nodes", err)
+	}
+
 	log.Fatal(http.ListenAndServe(":"+port, api.MakeHandler()))
 
 }
@@ -275,4 +285,25 @@ func listenForEvents(event *d.Event, ec chan error, args ...interface{}) {
 			}
 		}()
 	}
+}
+
+func updateEndpoints(dClient uc.Docker, dbConn ucdb.Db) error {
+	err := uc.WaitForDockerReady(dClient, 10)
+	if err != nil {
+		return err
+	}
+	allContainers, err := dClient.ListContainers(dfsouza.ListContainersOptions{All: true})
+	if err != nil {
+		return err
+	}
+	for _, container := range allContainers {
+		event := d.Event{
+			Id:     container.ID,
+			Status: "create",
+			From:   "self",
+			Time:   time.Now().Unix(),
+		}
+		listenForEvents(&event, nil, dbConn)
+	}
+	return nil
 }
