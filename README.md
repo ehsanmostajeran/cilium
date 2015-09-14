@@ -109,8 +109,11 @@ In our example we have:
 At this point you should have 9 containers on each node. For example, in one of
 the nodes we have:
 
+*(you probably don't have the `swarm-master` command, please go
+[here](#why-am-i-getting-json-cannot-unmarshal-number-into-go-value-of-type-typescontainer))*
+
 ```bash
-$ DOCKER_HOST=127.0.0.1:2375 docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
+$ swarm-master docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
 CONTAINER ID        IMAGE                              STATUS              NAMES
 d141780d59b2        cilium/docker-collector:latest     Up 6 minutes        node2/cilium-docker-collector
 cf3e329c9a24        cilium/cilium                      Up 6 minutes        node2/cilium-swarm-event-handler
@@ -135,7 +138,7 @@ services such as a load balancer and a DNS.
 
 Now you should have 2 more containers running in your cluster:
 ```
-$ DOCKER_HOST=127.0.0.1:2375 docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
+$ swarm-master docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
 CONTAINER ID        IMAGE                                    STATUS              NAMES
 bd820c3fa3fc        cilium/docker-dns-rest:1.0-rr-with-del   Up 6 minutes        localhost/cilium-dns
 753a75b39dff        tnolet/haproxy-rest                      Up 6 minutes        node1/cilium-loadbalancer
@@ -177,10 +180,14 @@ docker run --rm \
 *Don't forget it should be the full path or it won't work, that's why we have
 written the $PWD*
 
-Now run `DOCKER_HOST=127.0.0.1:2375 docker-compose up -d`, this will start
-both services (`redis` and `web`).
+Now run `swarm-master docker-compose up -d`, this will start both services
+(`redis` and `web`).
+
+*(you probably don't have the `swarm-master` command, please go
+[here](#why-am-i-getting-json-cannot-unmarshal-number-into-go-value-of-type-typescontainer))*
+
 ```bash
-$ DOCKER_HOST=127.0.0.1:2375 docker ps -a
+$ swarm-master docker ps -a
 CONTAINER ID        IMAGE                    COMMAND                  CREATED             STATUS              PORTS               NAMES
 168640ceb0ae        cilium/compose-example   "python app.py"          2 minutes ago       Up 2 minutes                            node1/compose_web_1
 2d5b35eb1dd5        redis                    "/entrypoint.sh redis"   3 minutes ago       Up 3 minutes                            node1/compose_redis_1
@@ -192,7 +199,7 @@ you must open port 6379*
 To test `web` container, open a new terminal and find out the tcp ports the
 load-balancer has open.
 ```bash
-$ DOCKER_HOST=127.0.0.1:2375 docker ps -a --filter=name=cilium-loadbalancer
+$ swarm-master docker ps -a --filter=name=cilium-loadbalancer
 CONTAINER ID        IMAGE                 COMMAND             CREATED             STATUS              PORTS                                                                                             NAMES
 6d96555a4395        tnolet/haproxy-rest   "/haproxy-rest"     17 minutes ago      Up 17 minutes       192.168.50.5:1988->1988/tcp, 192.168.50.5:5000->5000/tcp, 80/tcp, 192.168.50.5:10001->10001/tcp   node1/cilium-loadbalancer
 ```
@@ -212,13 +219,13 @@ Next we are going to scale up `web` to 3 containers. Go to the terminal were
 you have the `docker-compose.yml` file and run:
 
 ```bash
-$ DOCKER_HOST=localhost:2375 docker-compose scale web=3
+$ swarm-master docker-compose scale web=3
 ```
 You have successfully scaled the `web` service on to 3 containers.
 
 To see it, run:
 ```bash
-$ DOCKER_HOST=localhost:2375 docker-compose logs web
+$ swarm-master docker-compose logs web
 ```
 And leave this terminal open.
 
@@ -264,15 +271,18 @@ You can also see some ElasticSearch cluster statistics under [http://127.0.0.1:9
 ## Why am I getting `json: cannot unmarshal number into Go value of type []types.Container`?
 
 This is a bug that occurs when powerstrip tries to communicate with a local
-swarm that hasn't the `Role: replica`. Has a workaround you can perform the same
-request on the `Role: primary`. To find out, run:
+swarm that hasn't the `Role: replica`. Has a workaround you can download a
+script that finds out which is the swarm master's IP sets the `DOCKER_HOST` to
+that IP and runs the given commands with that environment variable.
 
 ```bash
-$ DOCKER_HOST=192.168.50.1:2375 docker info | grep Primary
-Primary: 192.168.50.5:2373
+# curl -LSsl -o /usr/local/bin/swarm-master https://raw.githubusercontent.com/cilium-team/cilium/master/scripts/swarm-master.sh
+# chmod +x /usr/local/bin/swarm-master
+$ swarm-master
+Using DOCKER_HOST=192.168.50.5:2375
 ```
 
-then you can run your requests as `DOCKER_HOST=192.168.50.3:2375 docker ps -a`
+then you can run your requests as `swarm-master docker ps -a`
 
 ## Why am I getting a `Error: dial unix /var/run/docker.sock: permission denied`?
 

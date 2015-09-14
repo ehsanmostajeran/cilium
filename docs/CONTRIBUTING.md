@@ -317,10 +317,14 @@ vagrant ssh -c 'cd cilium; sudo MASTER_IP=192.168.50.1 IP=192.168.50.5 make infe
 vagrant ssh -c 'cd cilium; sudo MASTER_IP=192.168.50.5 IP=192.168.50.6 make infect' node2
 ```
 
-We now have all nodes infected with `cilium` and if you execute `DOCKER_HOST=192.168.50.1:2375 docker ps -a`
-you'll see all nodes running with `cilium` components:
+We now have all nodes infected with `cilium` and if you execute
+`swarm-master docker ps -a` you'll see all nodes running with `cilium` components:
+
+*(you probably don't have the `swarm-master` command, please go
+[here](../README.md#why-am-i-getting-json-cannot-unmarshal-number-into-go-value-of-type-typescontainer))*
+
 ```
-$ DOCKER_HOST=192.168.50.1:2375 docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
+$ docker-master docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
 CONTAINER ID        IMAGE                              STATUS              NAMES
 d141780d59b2        cilium/docker-collector:latest     Up 6 minutes        node2/cilium-docker-collector
 cf3e329c9a24        cilium/cilium                      Up 6 minutes        node2/cilium-swarm-event-handler
@@ -367,7 +371,7 @@ make setup-services
 You can look at where those services are running in your cluster
 
 ```
-$ DOCKER_HOST=192.168.50.1:2375 docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
+$ docker-master docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
 CONTAINER ID        IMAGE                                    STATUS              NAMES
 bd820c3fa3fc        cilium/docker-dns-rest:1.0-rr-with-del   Up 6 minutes        localhost/cilium-dns
 753a75b39dff        tnolet/haproxy-rest                      Up 6 minutes        node1/cilium-loadbalancer
