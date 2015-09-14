@@ -63,7 +63,7 @@ application network.
 A policy file contains all options that you want to enforce in the containers
 that you want to run on a cilium cluster. Here's an example:
 
-```
+```yml
 ---
 policy-source:
   -

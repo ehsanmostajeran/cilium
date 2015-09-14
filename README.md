@@ -163,7 +163,7 @@ Inside that directory you should have:
 * `docker-compose.yml` - is a normal compose file without any modifications.
 * `app-policy.yml` - is cilium's policies that will be enforced accordingly
 the given coverage. To understand how this enforced go to
-[what options do you have available?](./docs/CONTRIBUTING.md#what-options-do-you-have-available).
+[what is a policy file?](./docs/CONTRIBUTING.md#what-is-a-policy-file)
 
 We have to store `app-policy.yml` in our distributed database. For so, run:
 
