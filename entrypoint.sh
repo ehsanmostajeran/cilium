@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-address="https://github.com/cilium-team/cilium/raw/master"
+address="https://raw.githubusercontent.com/cilium-team/cilium/master"
 
 dependencies=(\
 "docker" \
@@ -20,12 +20,12 @@ show_help(){
     echo "  prepare"
     echo "            downloads all images used by cilium node"
     echo "  infect"
-    echo "            infects this host with cilium's components"
-    echo "  store-policies"
-    echo "            stores policies in the distributed database. The IP"
+    echo "            infects this host with cilium's components The IP"
     echo "            environment variable should be set to the reachable"
-    echo "            node's IP. The NET_IP environment variable should also be"
-    echo "            set to the network's address of the reachable node's IP"
+    echo "            node's IP. If set, the NET_IP environment variable should"
+    echo "            be set to the network's address of the reachable node's"
+    echo "            IP. If set, the MASTER_IP should point to one of the"
+    echo "            alreay infected nodes."
     echo "  start-services"
     echo "            starts 3rd party services for the cilium cluster"
     echo "  start-kibana"
