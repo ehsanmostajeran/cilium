@@ -3,7 +3,7 @@ set -e
 
 address="https://raw.githubusercontent.com/cilium-team/cilium/master"
 
-dependencies=(\
+dependencies=( \
 "docker" \
 "docker --version" \
 "1.8.0" \
