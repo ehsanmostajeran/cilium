@@ -4,6 +4,7 @@
 *.so
 *.swp
 images
+cilium-*
 
 # Folders
 _obj
