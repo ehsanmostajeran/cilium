@@ -51,7 +51,7 @@ requirements:
 
 Make sure you have all requirements checked.
 
-* `curl -Ssl https://github.com/cilium-team/cilium/raw/master/entrypoint.sh | sh -s check`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | sh -s check`
 
 ### Preparing node
 
@@ -59,7 +59,7 @@ You can skip this step but we don't recommend it to skip it since it will allow
 a faster deployment of cilium's components on the specific node. This step will
 pull all docker images that we'll be using on the next steps.
 
-* `curl -Ssl https://github.com/cilium-team/cilium/raw/master/entrypoint.sh | sh -s prepare`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | sh -s prepare`
 
 ### Infecting a node
 
@@ -84,9 +84,9 @@ following environment variables:
 
 In our example we have:
 
-* `# curl -Ssl https://github.com/cilium-team/cilium/raw/master/entrypoint.sh | NET_IP=192.168.50.0/24 IP=192.168.50.37 sh -s infect`
+* `# curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | NET_IP=192.168.50.0/24 IP=192.168.50.37 sh -s infect`
 
-* `curl -Ssl https://github.com/cilium-team/cilium/raw/master/entrypoint.sh | NET_IP=<node's network address> IP=<node's IP address> sh -s infect`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | NET_IP=<node's network address> IP=<node's IP address> sh -s infect`
 
 If you only have one node in your cluster that's ok, you can go to [starting services](#starting-services)
 to continue.
@@ -102,9 +102,9 @@ one as `MASTER_IP`.
 
 In our example we have:
 
-* `# curl -Ssl https://github.com/cilium-team/cilium/raw/master/entrypoint.sh | MASTER_IP=192.168.50.38 IP=192.168.50.37 sh -s infect`
+* `# curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | MASTER_IP=192.168.50.38 IP=192.168.50.37 sh -s infect`
 
-* `curl -Ssl https://github.com/cilium-team/cilium/raw/master/entrypoint.sh | MASTER_IP=<An already infected node's IP address> IP=<node's IP address> sh -s infect`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | MASTER_IP=<An already infected node's IP address> IP=<node's IP address> sh -s infect`
 
 At this point you should have 9 containers on each node. For example, in one of
 the nodes we have:
@@ -131,7 +131,7 @@ step.
 Now that we have our cluster ready to receive some containers , we can run some
 services such as a load balancer and a DNS.
 
-* `curl -Ssl https://github.com/cilium-team/cilium/raw/master/entrypoint.sh | sh -s start-services`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | sh -s start-services`
 
 Now you should have 2 more containers running in your cluster:
 ```
@@ -247,7 +247,7 @@ container.
 
 You can see those statistics them by running:
 
-* `curl -Ssl https://github.com/cilium-team/cilium/raw/master/entrypoint.sh | IP=<node's IP address> sh -s start-kibana`
+* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | IP=<node's IP address> sh -s start-kibana`
 
 * Open your browser in [kibana's dashboard](http://127.0.0.1:5601/#/dashboard/Cilium-dashboard?_g=(refreshInterval:(display:'30%20seconds',pause:!f,section:1,value:30000),time:(from:now-15m,mode:quick,to:now))&_a=(filters:!(),query:(query_string:(analyze_wildcard:!t,query:'*')),title:Cilium-dashboard))
 
