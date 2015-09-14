@@ -248,29 +248,31 @@ func RequestsHandler(baseAddr string, w rest.ResponseWriter, req *rest.Request) 
 
 func listenForEvents(event *d.Event, ec chan error, args ...interface{}) {
 	if event != nil {
-		dbConn := args[0].(ucdb.Db)
-		log.Debug("Msg received listen only %s", event)
-		switch event.Status {
-		case "create":
-			log.Info("Adding endpoint for %s", event.Id)
-			u.AddEndpoint(dbConn, event.Id)
-		case "start":
-		case "stop":
-		case "destroy":
-			fallthrough
-		case "die":
-			log.Info("Removing endpoint for %s", event.Id)
-			if containerIPs, err := dbConn.GetEndpoint(event.Id); err == nil {
-				for _, ip := range containerIPs.IPs {
-					dbConn.DeleteIP(ip)
+		go func() {
+			dbConn := args[0].(ucdb.Db)
+			log.Debug("Msg received listen only %s", event)
+			switch event.Status {
+			case "create":
+				log.Info("Adding endpoint for %s", event.Id)
+				u.AddEndpoint(dbConn, event.Id)
+			case "start":
+			case "stop":
+			case "destroy":
+				fallthrough
+			case "die":
+				log.Info("Removing endpoint for %s", event.Id)
+				if containerIPs, err := dbConn.GetEndpoint(event.Id); err == nil {
+					for _, ip := range containerIPs.IPs {
+						dbConn.DeleteIP(ip)
+					}
+					u.RemoveLocalEndpoint(dbConn, event.Id)
+					dbConn.DeleteEndpoint(event.Id)
 				}
-				u.RemoveLocalEndpoint(dbConn, event.Id)
-				dbConn.DeleteEndpoint(event.Id)
+				/*if haProxyClient, err := dbConn.GetHAProxyConfig(); err == nil {
+					haProxyClient.DeleteBackend(event.Id)
+				}*/
+				u.RemoveEndpoint(event.Id)
 			}
-			/*if haProxyClient, err := dbConn.GetHAProxyConfig(); err == nil {
-				haProxyClient.DeleteBackend(event.Id)
-			}*/
-			u.RemoveEndpoint(event.Id)
-		}
+		}()
 	}
 }
