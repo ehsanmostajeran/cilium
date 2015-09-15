@@ -1,8 +1,7 @@
 FROM golang:1.5
 MAINTAINER "André Martins <aanm90@gmail.com>"
-RUN go get github.com/tools/godep
-ADD Godeps /go/src/github.com/cilium-team/cilium/Godeps
-ADD cilium /go/src/github.com/cilium-team/cilium/cilium
+ADD . /go/src/github.com/cilium-team/cilium
+ENV GOPATH /go/src:/go/src/github.com/cilium-team/cilium/Godeps/_workspace:$GOPATH
 WORKDIR /go/src/github.com/cilium-team/cilium
-RUN godep go test ./cilium/...
-RUN godep go build -o cilium-Linux-x86_64 ./cilium/cilium.go
+RUN go test ./cilium/...
+RUN go build -o cilium-Linux-x86_64 ./cilium/cilium.go

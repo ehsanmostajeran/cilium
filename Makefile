@@ -34,7 +34,7 @@ cilium-image:
 	@./scripts/build-cilium-image.sh
 
 cilium-binary:
-	@./scripts/build-cilium-binary-image.sh
+	@./scripts/build-cilium-binary.sh
 
 clean-containers:
 	@./scripts/clean-containers.sh
