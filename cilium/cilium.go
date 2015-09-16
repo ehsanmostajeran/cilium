@@ -258,7 +258,7 @@ func RequestsHandler(baseAddr string, w rest.ResponseWriter, req *rest.Request) 
 
 func listenForEvents(event *d.Event, ec chan error, args ...interface{}) {
 	if event != nil {
-		go func() {
+		go func(event d.Event) {
 			dbConn := args[0].(ucdb.Db)
 			log.Debug("Msg received listen only %s", event)
 			switch event.Status {
@@ -283,7 +283,7 @@ func listenForEvents(event *d.Event, ec chan error, args ...interface{}) {
 				}*/
 				u.RemoveEndpoint(event.Id)
 			}
-		}()
+		}(*event)
 	}
 }
 
