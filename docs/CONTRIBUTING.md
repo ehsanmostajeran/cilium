@@ -388,7 +388,8 @@ There are a couple of targets available for developers in the root's Makefile.
 cilium node inside `images/` directory.
 - __cilium-binary__ - Builds the cilium binary inside docker and copies the
 binary to the root's project.
-- __cilium-image__ - Builds cilium's docker image with the tag `latest`.
+- __cilium-image__ - Builds cilium's docker image from `Dockerfile.dev` with
+the tag `latest`. The docker image produced is copied to the images/ directory.
 - __cilium__ - Produces the cilium binary.
 - __clean-containers__ - Cleans all containers with that have the name "cilium"
 in the node that is executed.
