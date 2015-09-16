@@ -88,8 +88,8 @@ In our example we have:
 
 * `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | NET_IP=<node's network address> IP=<node's IP address> bash -s infect`
 
-If you only have one node in your cluster that's ok, you can go to [starting services](#starting-services)
-to continue.
+If you only have one node in your cluster that's ok, you can go to [compose-example](#compose-demo)
+step to complete the demo.
 
 The second and remaining nodes will only require the following environment
 variables:
@@ -106,7 +106,7 @@ In our example we have:
 
 * `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | MASTER_IP=<An already infected node's IP address> IP=<node's IP address> bash -s infect`
 
-At this point you should have 9 containers on each node. For example, in one of
+At this point you should have 9+2 containers on each node. For example, in one of
 the nodes we have:
 
 *(you probably don't have the `swarm-master` command, please go
@@ -126,23 +126,16 @@ a80915511fe2        cilium/cilium                      Up 7 minutes        node2
 30343151fde0        progrium/consul                    Up 7 minutes        node2/cilium-consul
 ```
 
-### Starting services
+The remaining 2 containers are the `cilium` services, the load balancer and the
+DNS. You can find them by running:
 
-Make sure you have infected all nodes that you want before going through this
-step.
-
-Now that we have our cluster ready to receive some containers , we can run some
-services such as a load balancer and a DNS.
-
-* `curl -Ssl https://raw.githubusercontent.com/cilium-team/cilium/master/entrypoint.sh | bash -s start-services`
-
-Now you should have 2 more containers running in your cluster:
 ```
-$ swarm-master docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
+$ swarm-master docker ps -a --filter=name=cilium-dns --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
 CONTAINER ID        IMAGE                                    STATUS              NAMES
 bd820c3fa3fc        cilium/docker-dns-rest:1.0-rr-with-del   Up 6 minutes        localhost/cilium-dns
+$ swarm-master docker ps -a --filter=name=cilium-loadbalancer --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
+CONTAINER ID        IMAGE                                    STATUS              NAMES
 753a75b39dff        tnolet/haproxy-rest                      Up 6 minutes        node1/cilium-loadbalancer
-...
 ```
 
 Congratulations you have setup a `cilium` cluster! Go to the [compose-example](#compose-demo)

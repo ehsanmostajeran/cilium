@@ -25,9 +25,9 @@ show_help(){
     echo "            node's IP. If set, the NET_IP environment variable should"
     echo "            be set to the network's address of the reachable node's"
     echo "            IP. If set, the MASTER_IP should point to one of the"
-    echo "            alreay infected nodes."
-    echo "  start-services"
-    echo "            starts 3rd party services for the cilium cluster"
+    echo "            already infected nodes. On the first node it"
+    echo "            automatically starts 3rd party services for the cilium"
+    echo "            cluster such as the loadbalancer and the DNS"
     echo "  start-kibana"
     echo "            starts kibana container with dashboard The IP environment"
     echo "            variable should be set to the reachable node's IP"
@@ -189,6 +189,7 @@ case $1 in
 	        infect
             if [[ -n $NET_IP ]]; then
                 store_policy
+                start_services
                 echo "First node infected!"
             else
                 echo "Node infected!"
@@ -198,10 +199,6 @@ case $1 in
             exit 1
         fi
         show_help
-        exit 0
-    ;;
-    start-services)
-        start_services
         exit 0
     ;;
     start-kibana)
