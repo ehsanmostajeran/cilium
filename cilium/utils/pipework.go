@@ -53,7 +53,7 @@ func AddEndpoint(dbConn ucdb.Db, containerID string) error {
 	log.Debug("Adding remote endpoint %s, local node %s", containerID, os.Getenv("HOST_IP"))
 	attempts := 1
 	for attempts <= 10 {
-		log.Debug("Attempt %d...", attempts)
+		log.Debug("Attempt %d for container %v...", attempts, containerID)
 		endpoint, err := dbConn.GetEndpoint(containerID)
 		if err != nil || endpoint.Container == "" {
 			log.Debug("Could not find entry for %s", containerID)
@@ -97,7 +97,7 @@ func RemoveLocalEndpoint(dbConn ucdb.Db, containerID string) error {
 	attempts := 1
 	removeEndpointCmd := fmt.Sprintf("%s %s", os.Getenv("REMOVE_ENDPOINT"), containerID)
 	for attempts <= 10 {
-		log.Debug("Attempt %d...", attempts)
+		log.Debug("Attempt %d for container %v...", attempts, containerID)
 		endpoint, err := dbConn.GetEndpoint(containerID)
 		if err != nil || endpoint.Container == "" {
 			log.Debug("Could not find entry for %s", containerID)
