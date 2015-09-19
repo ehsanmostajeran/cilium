@@ -23,6 +23,8 @@ cilium/docker-dns-rest:1.0-rr-with-del \
 cilium/docker-collector:latest \
 "compose-example.ditar" \
 cilium/compose-example:latest \
+"debug_shell.ditar" \
+cilium/debug_shell:latest \
 )
 
 echo "Pulling necessary images from DockerHub..."
@@ -36,12 +38,6 @@ for ((i=0; i<"${#docker_images[@]}"; i+=2)); do
     docker save -o "./images/${docker_images["$((i))"]}" "${docker_images["$((i+1))"]}"
     chown $(whoami) "./images/${docker_images["$((i))"]}"
 done
-
-cd ./debug-shell/
-docker build -t debug_shell:latest .
-cd ../
-docker save -o ./images/debug_shell.ditar debug_shell:latest
-chown $(whoami) ./images/debug_shell.ditar
 
 $dir/build-cilium-image.sh
 

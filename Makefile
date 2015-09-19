@@ -80,7 +80,7 @@ run-kibana:
 	@./scripts/run-kibana.sh
 
 shell:
-	@DOCKER_HOST=localhost:2375 docker run -ti --privileged --rm -l com.intent.service=debug debug_shell
+	@DOCKER_HOST=localhost:2375 docker run -ti --privileged --rm -l com.intent.service=debug cilium/debug_shell
 
 update-godeps:
 	@./scripts/update-godeps.sh
