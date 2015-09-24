@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strconv"
 	"sync"
 	"time"
 
@@ -32,6 +33,7 @@ var (
 	listOnlyForEvents bool
 	deleteDB          bool
 	flushConfig       bool
+	port              int
 	log               = logging.MustGetLogger("cilium")
 	wg                sync.WaitGroup
 	stdoutFormat      = logging.MustStringFormatter(
@@ -45,7 +47,6 @@ var (
 )
 
 const (
-	port              = "8080"
 	daemonPreBaseAddr = "/daemon/cilium-adapter"
 	swarmPreBaseAddr  = "/swarm/cilium-adapter"
 )
@@ -58,6 +59,7 @@ func init() {
 	flag.BoolVar(&flushConfig, "F", false, "Clear configuration but keep state in database")
 	flag.BoolVar(&events, "e", true, "Listens for docker events so it can automatically clean IPs and configurations used by stopped and deleted containers.")
 	flag.BoolVar(&listOnlyForEvents, "o", false, "Listen mode only. It only listens for events from a particular docker daemon.")
+	flag.IntVar(&port, "P", 8080, "Cilium's listening port.")
 	flag.Parse()
 
 	if len(filename) == 0 {
@@ -206,7 +208,7 @@ func main() {
 		log.Error("Error while updating state from other nodes", err)
 	}
 
-	log.Fatal(http.ListenAndServe(":"+port, api.MakeHandler()))
+	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), api.MakeHandler()))
 
 }
 
