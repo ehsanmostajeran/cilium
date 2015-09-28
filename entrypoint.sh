@@ -57,6 +57,12 @@ check_requirements(){
            return
         fi
     done
+    docker_IP=$(ip -f inet -o addr show docker0|cut -d\  -f 7 | cut -d/ -f 1)
+    if [[ -z $docker_IP ]]; then
+	echo "ERROR: Unable to find docker0 IP address."
+	echo "Are you sure you have docker daemon running?"
+    fi
+
     echo "SUCCESS: All dependencies are available with the right version!"
     eval "$1=0"
 }
@@ -144,6 +150,8 @@ store_policy(){
     curl -Ssl -o "$policies_tmp/4-debug-shell.yml" "$address/policy/4-debug-shell.yml"
     net_ip=$(requote "$NET_IP")
     sed -i "s/192.168.50.0\/24/$net_ip/g" "$policies_tmp/1-cluster.yml"
+    docker_IP=$(ip -f inet -o addr show docker0|cut -d\  -f 7 | cut -d/ -f 1)
+    sed -i "s/172.17.42.1/$docker_IP/g" "$policies_tmp/1-cluster.yml"
     docker run --rm \
     -e ELASTIC_IP=$IP \
     -v "$policies_tmp":/opt/cilium/policies/ \
