@@ -5,6 +5,7 @@ package posthook
 import (
 	"regexp"
 	"strings"
+	"time"
 
 	m "github.com/cilium-team/cilium/cilium/messages"
 	uc "github.com/cilium-team/cilium/cilium/utils/comm"
@@ -100,6 +101,34 @@ func getDockerIDFrom(req string) string {
 	return strings.Replace(r.FindString(req), "/", "", -1)
 }
 
+// getDockerContainer gets the container information from docker, if the
+// container doesn't exist it retries 10 more times before giving up.
+func (p PostHook) getDockerContainer(containerID string) (*d.Container, error) {
+	var (
+		dockerContainer *d.Container
+		err             error
+	)
+	attempts := 1
+	maxAttempds := 10
+	for attempts <= maxAttempds {
+		dockerContainer, err = p.dockerConn.InspectContainer(containerID)
+		if err != nil {
+			e := d.NoSuchContainer{ID: containerID}
+			if err.Error() == e.Error() {
+				log.Info("Container %s not found, attempt %d/%d...", containerID, attempts, maxAttempds)
+				const delay = 3 * time.Second
+				time.Sleep(delay)
+				attempts++
+			} else {
+				return nil, err
+			}
+		} else {
+			return dockerContainer, nil
+		}
+	}
+	return dockerContainer, err
+}
+
 // postHook takes care of preparing necessary requirements so it can call all
 // Runnables available under server/utils/profile/runnables.
 // It returns an error if it isn't possible to decode a request. All remaining
@@ -114,7 +143,8 @@ func (p PostHook) postHook(endPoint string, cont []byte) (m.Response, error) {
 	log.Debug("PowerstripPostHookRequest %+v", pphreq)
 
 	containerID := getDockerIDFrom(pphreq.ClientRequest.Request)
-	dockerContainer, err := p.dockerConn.InspectContainer(containerID)
+
+	dockerContainer, err := p.getDockerContainer(containerID)
 	if err != nil {
 		return &PowerstripPostHookResponse{}, err
 	}
