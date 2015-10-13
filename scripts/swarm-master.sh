@@ -17,8 +17,8 @@ else
 	export DOCKER_HOST="$(echo $primary | grep -oE $ip_regex):2375"
 fi
 
-echo "Using DOCKER_HOST=$DOCKER_HOST"
-echo ""
+>&2 echo "Using DOCKER_HOST=$DOCKER_HOST"
+>&2 echo ""
 
 $@
 
