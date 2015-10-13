@@ -143,7 +143,7 @@ func main() {
 		log.Info("File successfuly stored")
 		os.Exit(0)
 	} else {
-		if deleteDB {
+		if deleteDB || flushConfig {
 			os.Exit(0)
 		}
 	}
