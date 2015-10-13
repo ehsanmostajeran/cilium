@@ -36,7 +36,7 @@ var (
 		`\"CapAdd\":null,\"CapDrop\":null,\"RestartPolicy\":{\"Name\":\"no\",\"MaximumRetryCount\":0},\"SecurityOpt\":null,` +
 		`\"ReadonlyRootfs\":false,\"Ulimits\":null,\"LogConfig\":{\"type\":\"\",\"config\":null},\"CgroupParent\":\"\"}}`
 	validMethod        = `POST`
-	validHeaderReq     = `/daemon/cilium-adapter/v1.15/containers/` + validContainerID + `/start?name=hello`
+	validHeaderReq     = `/docker/daemon/cilium-adapter/v1.15/containers/` + validContainerID + `/start?name=hello`
 	validContentType   = `"application/json"`
 	validServerRequest = `{"Type": ` + validType + `, "PowerstripProtocolVersion": ` +
 		strconv.Itoa(validPPV) + `, "ClientRequest": {"Body": "` + validBody + `", ` +
@@ -96,10 +96,10 @@ func TestDefaultInvalidRequest(t *testing.T) {
 }
 
 func TestGetDockerIDFrom(t *testing.T) {
-	validReq1 := `/daemon/cilium-adapter/v1.15/containers/` + validContainerID + `/start?name=hello`
-	validReq2 := `/daemon/cilium-adapter/v1.15/containers/` + validContainerID + `/start?name=` +
+	validReq1 := `/docker/daemon/cilium-adapter/v1.15/containers/` + validContainerID + `/start?name=hello`
+	validReq2 := `/docker/daemon/cilium-adapter/v1.15/containers/` + validContainerID + `/start?name=` +
 		`hello-025ec22c60f02cdaf765829ac74c0ecb83f3553de9a33f994b448482ad5b2002`
-	invalidReq1 := `/daemon/cilium-adapter/v1.15/containers/create?name=` +
+	invalidReq1 := `/docker/daemon/cilium-adapter/v1.15/containers/create?name=` +
 		`hello-` + validContainerID
 
 	if got := getDockerIDFrom(validReq1); got != validContainerID {
@@ -226,15 +226,15 @@ func TestParseRequest(t *testing.T) {
 		baseAddr string
 		want     string
 	}{
-		{`/daemon/cilium-adapter`, "DaemonCreate"},
+		{`/docker/daemon/cilium-adapter`, "DockerDaemonCreate"},
 		{`/something`, "Default"},
 	}
 	testsHandlers := []struct {
 		baseAddr string
 		want     string
 	}{
-		{`/daemon/cilium-adapter/v1.20/containers/48380b123e1be550f171787473a1f6683b1e3d966b2521b46d01eccfdf0e8b1f/restart?t=10`, "DaemonRestart"},
-		{`/daemon/cilium-adapter/v1.20/containers/48380b123e1be550f171787473a1f6683b1e3d966b2521b46d01eccfdf0e8b1f/start?t=10`, "DaemonStart"},
+		{`/docker/daemon/cilium-adapter/v1.20/containers/48380b123e1be550f171787473a1f6683b1e3d966b2521b46d01eccfdf0e8b1f/restart?t=10`, "DockerDaemonRestart"},
+		{`/docker/daemon/cilium-adapter/v1.20/containers/48380b123e1be550f171787473a1f6683b1e3d966b2521b46d01eccfdf0e8b1f/start?t=10`, "DockerDaemonStart"},
 	}
 	for _, tt := range testsHandlers {
 		if got := parseRequest(tt.baseAddr, ""); got != tt.want {

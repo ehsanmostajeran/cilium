@@ -15,7 +15,7 @@ type serverResponse struct {
 	Code        int
 }
 
-type CreateConfig struct {
+type DockerCreateConfig struct {
 	ID       string `json:"Id,omitempty" yaml:"Id,omitempty"`
 	Warnings string `json:"Warnings,omitempty" yaml:"Warnings,omitempty"`
 }

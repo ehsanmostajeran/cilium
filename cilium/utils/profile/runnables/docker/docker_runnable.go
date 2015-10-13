@@ -54,8 +54,8 @@ func (dr DockerRunnable) GetRunnableFrom(users []up.User, policies []up.PolicySo
 	return DockerRunnable{dockercfg: &finalDockerCfg}
 }
 
-func (dr DockerRunnable) Exec(hookType, reqType string, db ucdb.Db, cc *m.CreateConfig) error {
-	cc.MergeWithOverwrite(m.CreateConfig{
+func (dr DockerRunnable) DockerExec(hookType, reqType string, db ucdb.Db, cc *m.DockerCreateConfig) error {
+	cc.MergeWithOverwrite(m.DockerCreateConfig{
 		Config:     (*d.Config)(&dr.dockercfg.Config),
 		HostConfig: (*d.HostConfig)(&dr.dockercfg.HostConfig)})
 	return nil

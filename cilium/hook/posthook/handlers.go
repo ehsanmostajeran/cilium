@@ -10,6 +10,7 @@ import (
 	m "github.com/cilium-team/cilium/cilium/messages"
 	uc "github.com/cilium-team/cilium/cilium/utils/comm"
 	ucdb "github.com/cilium-team/cilium/cilium/utils/comm/db"
+	up "github.com/cilium-team/cilium/cilium/utils/profile"
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
@@ -19,13 +20,14 @@ import (
 var log = logging.MustGetLogger("cilium")
 
 const (
-	Type = "post-hook"
+	Type   = "post-hook"
+	Docker = "Docker"
 )
 
 var handlers = map[string]string{
-	`/daemon/cilium-adapter/.*/containers/create(\?.*)?`:     "DaemonCreate",
-	`/daemon/cilium-adapter/.*/containers/.*/start(\?.*)?`:   "DaemonStart",
-	`/daemon/cilium-adapter/.*/containers/.*/restart(\?.*)?`: "DaemonRestart",
+	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:     "DockerDaemonCreate",
+	`/docker/daemon/cilium-adapter/.*/containers/.*/start(\?.*)?`:   "DockerDaemonStart",
+	`/docker/daemon/cilium-adapter/.*/containers/.*/restart(\?.*)?`: "DockerDaemonRestart",
 }
 
 type PostHook struct {
@@ -142,15 +144,6 @@ func (p PostHook) postHook(endPoint string, cont []byte) (m.Response, error) {
 	}
 	log.Debug("PowerstripPostHookRequest %+v", pphreq)
 
-	containerID := getDockerIDFrom(pphreq.ClientRequest.Request)
-
-	dockerContainer, err := p.getDockerContainer(containerID)
-	if err != nil {
-		return &PowerstripPostHookResponse{}, err
-	}
-
-	createConfig := m.NewCreateConfigFromDockerContainer(*dockerContainer)
-
 	users, err := p.dbConn.GetUsers()
 	if err != nil {
 		// If we can't connect to DB we just sent the response without any
@@ -158,6 +151,26 @@ func (p PostHook) postHook(endPoint string, cont []byte) (m.Response, error) {
 		log.Error("Error: %+v", err)
 		return defaultRequest(cont)
 	}
+
+	if strings.HasPrefix(endPoint, Docker) {
+		return p.postHookDocker(endPoint, pphreq, users, cont)
+	}
+	return defaultRequest(cont)
+}
+
+// postHookDocker deals with post-hook requests that are docker specific.
+func (p PostHook) postHookDocker(endPoint string, pphreq PowerstripPostHookRequest,
+	users []up.User, cont []byte) (m.Response, error) {
+	log.Debug("")
+
+	containerID := getDockerIDFrom(pphreq.ClientRequest.Request)
+
+	dockerContainer, err := p.getDockerContainer(containerID)
+	if err != nil {
+		return &PowerstripPostHookResponse{}, err
+	}
+
+	createConfig := m.NewDockerCreateConfigFromDockerContainer(*dockerContainer)
 
 	if createConfig.Config == nil || createConfig.Config.Labels == nil {
 		log.Info("Request has empty config or empty labels.")
@@ -177,7 +190,7 @@ func (p PostHook) postHook(endPoint string, cont []byte) (m.Response, error) {
 	for _, runnables := range upr.GetRunnables() {
 		runnable := runnables.GetRunnableFrom(users, policies)
 		log.Info("Loaded and merged policy for container %s: %#v", createConfig.ID, runnable)
-		if err = runnable.Exec(Type, endPoint, p.dbConn, &createConfig); err != nil {
+		if err = runnable.DockerExec(Type, endPoint, p.dbConn, &createConfig); err != nil {
 			return &PowerstripPostHookResponse{}, err
 		}
 	}

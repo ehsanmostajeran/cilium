@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	DaemonCreate = "DaemonCreate"
-	SwarmCreate  = "SwarmCreate"
+	DockerDaemonCreate = "DockerDaemonCreate"
+	DockerSwarmCreate  = "DockerSwarmCreate"
 )
 
 type Runnables map[string]PolicyRunnable
@@ -37,5 +37,5 @@ func GetRunnables() Runnables {
 
 type PolicyRunnable interface {
 	GetRunnableFrom(users []up.User, policies []up.PolicySource) PolicyRunnable
-	Exec(hookType, reqType string, db ucdb.Db, cc *m.CreateConfig) error
+	DockerExec(hookType, reqType string, db ucdb.Db, cc *m.DockerCreateConfig) error
 }

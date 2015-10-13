@@ -4,9 +4,11 @@ package prehook
 
 import (
 	"regexp"
+	"strings"
 
 	m "github.com/cilium-team/cilium/cilium/messages"
 	ucdb "github.com/cilium-team/cilium/cilium/utils/comm/db"
+	up "github.com/cilium-team/cilium/cilium/utils/profile"
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
@@ -16,12 +18,13 @@ import (
 var log = logging.MustGetLogger("cilium")
 
 const (
-	Type = "pre-hook"
+	Type   = "pre-hook"
+	Docker = "Docker"
 )
 
 var handlers = map[string]string{
-	`/swarm/cilium-adapter/.*/containers/create(\?.*)?`:  "SwarmCreate",
-	`/daemon/cilium-adapter/.*/containers/create(\?.*)?`: "DaemonCreate",
+	`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:  "DockerSwarmCreate",
+	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`: "DockerDaemonCreate",
 }
 
 type PreHook struct {
@@ -102,8 +105,19 @@ func (p PreHook) preHook(endPoint string, cont []byte) (m.Response, error) {
 		return defaultRequest(cont)
 	}
 
-	var createConfig m.CreateConfig
-	if err = pphreq.UnmarshalCreateClientBody(&createConfig); err != nil {
+	if strings.HasPrefix(endPoint, Docker) {
+		return p.preHookDocker(endPoint, pphreq, users, cont)
+	}
+	return defaultRequest(cont)
+}
+
+// preHookDocker deals with pre-hook requests that are docker specific.
+func (p PreHook) preHookDocker(endPoint string, pphreq PowerstripPreHookRequest,
+	users []up.User, cont []byte) (m.Response, error) {
+	log.Debug("")
+
+	var createConfig m.DockerCreateConfig
+	if err := pphreq.UnmarshalDockerCreateClientBody(&createConfig); err != nil {
 		log.Error("Error: %+v", err)
 		return defaultRequest(cont)
 	}
@@ -130,7 +144,7 @@ func (p PreHook) preHook(endPoint string, cont []byte) (m.Response, error) {
 	for _, runnables := range upr.GetRunnables() {
 		runnable := runnables.GetRunnableFrom(users, policies)
 		log.Info("Loaded and merged policy for container %s: %#v", createConfig.Name, runnable)
-		if err = runnable.Exec(Type, endPoint, p.dbConn, &createConfig); err != nil {
+		if err = runnable.DockerExec(Type, endPoint, p.dbConn, &createConfig); err != nil {
 			return PowerstripPreHookResponse{}, err
 		}
 	}

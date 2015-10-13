@@ -123,7 +123,7 @@ func TestPreHook(t *testing.T) {
 
 	upr.Register("docker-config", uprd.DockerRunnable{})
 
-	defaultPPHR, err := ph.preHook("Default", []byte(validRequest))
+	defaultPPHR, err := ph.preHook("DockerSwarmCreate", []byte(validRequest))
 	if err != nil {
 		t.Error("error occured while executing preHook", err)
 	}
@@ -205,8 +205,8 @@ func TestParseRequest(t *testing.T) {
 		baseAddr string
 		want     string
 	}{
-		{`/swarm/cilium-adapter`, "SwarmCreate"},
-		{`/daemon/cilium-adapter`, "DaemonCreate"},
+		{`/docker/swarm/cilium-adapter`, "DockerSwarmCreate"},
+		{`/docker/daemon/cilium-adapter`, "DockerDaemonCreate"},
 		{`/something`, "Default"},
 	}
 	for _, tt := range tests {

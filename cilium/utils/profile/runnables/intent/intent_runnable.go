@@ -26,20 +26,19 @@ const Name = "intent-runnable"
 
 var (
 	log          = logging.MustGetLogger("cilium")
-	hookHandlers = map[string]func(ucdb.Db, *upsi.Intent, *m.CreateConfig) error{
-		"pre-hookDaemonCreate":   preHookDaemonCreateExecIntentConfig,
-		"pre-hookSwarmCreate":    preHookExecIntentConfig,
-		"post-hookDaemonStart":   postHookExecIntentConfig,
-		"post-hookDaemonRestart": postHookExecIntentConfig,
+	hookHandlers = map[string]func(ucdb.Db, *upsi.Intent, *m.DockerCreateConfig) error{
+		"pre-hookDockerDaemonCreate":   preHookDaemonCreateExecIntentConfig,
+		"pre-hookDockerSwarmCreate":    preHookExecIntentConfig,
+		"post-hookDockerDaemonStart":   postHookExecIntentConfig,
+		"post-hookDockerDaemonRestart": postHookExecIntentConfig,
 	}
-	postHookHandlers = map[string]func(ucdb.Db, upsi.Intent, *m.CreateConfig, *d.Container) error{}
 )
 
 type IntentRunnable struct {
 	intent *upsi.Intent
 }
 
-func (ir IntentRunnable) Exec(hookType, reqType string, db ucdb.Db, cc *m.CreateConfig) error {
+func (ir IntentRunnable) DockerExec(hookType, reqType string, db ucdb.Db, cc *m.DockerCreateConfig) error {
 	if f, ok := hookHandlers[hookType+reqType]; ok {
 		f(db, ir.intent, cc)
 	}
@@ -96,7 +95,7 @@ func (ir IntentRunnable) GetRunnableFrom(users []up.User, policies []up.PolicySo
 	return IntentRunnable{intent: &finalIntentCfg.Config}
 }
 
-func preHookDaemonCreateExecIntentConfig(conn ucdb.Db, intent *upsi.Intent, containerConfig *m.CreateConfig) error {
+func preHookDaemonCreateExecIntentConfig(conn ucdb.Db, intent *upsi.Intent, containerConfig *m.DockerCreateConfig) error {
 	log.Debug("intent %#v", intent)
 	log.Debug("container config %+v", containerConfig.Config)
 	if len(containerConfig.Labels) == 0 {
@@ -122,7 +121,7 @@ func preHookDaemonCreateExecIntentConfig(conn ucdb.Db, intent *upsi.Intent, cont
 	return nil
 }
 
-func preHookExecIntentConfig(conn ucdb.Db, intent *upsi.Intent, containerConfig *m.CreateConfig) error {
+func preHookExecIntentConfig(conn ucdb.Db, intent *upsi.Intent, containerConfig *m.DockerCreateConfig) error {
 	log.Debug("intent %#v", intent)
 	log.Debug("container config %+v", containerConfig.Config)
 	if len(containerConfig.Labels) == 0 {
@@ -197,7 +196,7 @@ func preHookExecIntentConfig(conn ucdb.Db, intent *upsi.Intent, containerConfig 
 	return nil
 }
 
-func postHookExecIntentConfig(dbConn ucdb.Db, intent *upsi.Intent, containerConfig *m.CreateConfig) error {
+func postHookExecIntentConfig(dbConn ucdb.Db, intent *upsi.Intent, containerConfig *m.DockerCreateConfig) error {
 	log.Debug("intent: %#v", intent)
 	log.Debug("container config %+v", containerConfig.Config)
 	if len(containerConfig.Labels) == 0 {

@@ -20,7 +20,7 @@ type ClientRequest struct {
 	Body    string
 }
 
-type CreateConfig struct {
+type DockerCreateConfig struct {
 	Name string `json:"-" yaml:"-"`
 	*d.Config
 	ID         string        `json:"-" yaml:"-"`
@@ -28,14 +28,14 @@ type CreateConfig struct {
 	HostConfig *d.HostConfig `json:"HostConfig,omitempty" yaml:"HostConfig,omitempty"`
 }
 
-// NewCreateConfigFromDockerContainer creates a CreateConfig from the giving
-// go-dockerclient Container it makes a deep copy of the Config and HostConfig
-// pointers in go-dockerclient Container
-func NewCreateConfigFromDockerContainer(container d.Container) CreateConfig {
+// NewDockerCreateConfigFromDockerContainer creates a CreateConfig from the
+// giving go-dockerclient Container it makes a deep copy of the Config and
+// HostConfig pointers in go-dockerclient Container
+func NewDockerCreateConfigFromDockerContainer(container d.Container) DockerCreateConfig {
 	config := *container.Config
 	hostConfig := *container.HostConfig
 	state := container.State
-	return CreateConfig{
+	return DockerCreateConfig{
 		Name:       container.Name,
 		ID:         container.ID,
 		Config:     &config,
@@ -44,9 +44,9 @@ func NewCreateConfigFromDockerContainer(container d.Container) CreateConfig {
 	}
 }
 
-// MergeWith merges a CreateConfig (other) with self only if its own values have
-// the zero value of its type.
-func (cc *CreateConfig) MergeWith(other CreateConfig) {
+// MergeWith merges a DockerCreateConfig (other) with self only if its own
+// values have the zero value of its type.
+func (cc *DockerCreateConfig) MergeWith(other DockerCreateConfig) {
 	if cc.Name == "" {
 		cc.Name = other.Name
 	}
@@ -62,9 +62,9 @@ func (cc *CreateConfig) MergeWith(other CreateConfig) {
 	}
 }
 
-// MergeWithOverwrite merges a CreateConfig (other) with self if other's
+// MergeWithOverwrite merges a DockerCreateConfig (other) with self if other's
 // values aren't nil.
-func (cc *CreateConfig) MergeWithOverwrite(other CreateConfig) {
+func (cc *DockerCreateConfig) MergeWithOverwrite(other DockerCreateConfig) {
 	if other.Name != "" {
 		cc.Name = other.Name
 	}
@@ -86,9 +86,9 @@ func (cc *CreateConfig) MergeWithOverwrite(other CreateConfig) {
 	}
 }
 
-// UnmarshalCreateClientBody unmarshals the PowerstripRequest into a
-// CreateConfig.
-func (p PowerstripRequest) UnmarshalCreateClientBody(cc *CreateConfig) error {
+// UnmarshalDockerCreateClientBody unmarshals the PowerstripRequest into a
+// DockerCreateConfig.
+func (p PowerstripRequest) UnmarshalDockerCreateClientBody(cc *DockerCreateConfig) error {
 	if p.ClientRequest.Body == "" {
 		return nil
 	}
@@ -118,18 +118,9 @@ func (p PowerstripRequest) UnmarshalClientBody(config *d.Config) error {
 	return nil
 }
 
-// Marshal2JSONStr returns on a json string format of the given CreateConfig.
-func (cc *CreateConfig) Marshal2JSONStr() (string, error) {
+// Marshal2JSONStr returns on a json string format of the given DockerCreateConfig.
+func (cc *DockerCreateConfig) Marshal2JSONStr() (string, error) {
 	bytes, err := json.Marshal(cc)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
-}
-
-// Marshal2JSONStr returns on a json string format of the given d.Config.
-func Marshal2JSONStr(dc d.Config) (string, error) {
-	bytes, err := json.Marshal(dc)
 	if err != nil {
 		return "", err
 	}

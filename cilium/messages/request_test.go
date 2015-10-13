@@ -41,8 +41,8 @@ var (
 	validSimpleBodyWoutEscQuot = strings.Replace(validSimpleBody, `\"`, `"`, -1)
 )
 
-func TestNewCreateConfigFromDockerContainer(t *testing.T) {
-	cc := NewCreateConfigFromDockerContainer(validContainer)
+func TestNewDockerCreateConfigFromDockerContainer(t *testing.T) {
+	cc := NewDockerCreateConfigFromDockerContainer(validContainer)
 	if cc.Name != validContainer.Name {
 		t.Errorf("invalid CreateConfig:\ngot  %s\nwant %s", cc.Name, validContainer.Name)
 	}
@@ -61,9 +61,9 @@ func TestNewCreateConfigFromDockerContainer(t *testing.T) {
 }
 
 func TestMergeWith(t *testing.T) {
-	c1 := NewCreateConfigFromDockerContainer(validContainer)
-	c2 := NewCreateConfigFromDockerContainer(validContainer)
-	ccwant := NewCreateConfigFromDockerContainer(validContainer)
+	c1 := NewDockerCreateConfigFromDockerContainer(validContainer)
+	c2 := NewDockerCreateConfigFromDockerContainer(validContainer)
+	ccwant := NewDockerCreateConfigFromDockerContainer(validContainer)
 	c2.Image = "foo"
 	ccwant.Image = "foo"
 	c1.MergeWith(c2)
@@ -79,9 +79,9 @@ func TestMergeWith(t *testing.T) {
 }
 
 func TestMergeWithOverwrite(t *testing.T) {
-	c1 := NewCreateConfigFromDockerContainer(validContainer)
-	c2 := NewCreateConfigFromDockerContainer(validContainer)
-	ccwant := NewCreateConfigFromDockerContainer(validContainer)
+	c1 := NewDockerCreateConfigFromDockerContainer(validContainer)
+	c2 := NewDockerCreateConfigFromDockerContainer(validContainer)
+	ccwant := NewDockerCreateConfigFromDockerContainer(validContainer)
 	c2.Image = "foo"
 	ccwant.Image = "foo"
 	c1.MergeWithOverwrite(c2)
@@ -104,8 +104,8 @@ func TestUnmarshalCreateClientBody(t *testing.T) {
 	if err != nil {
 		t.Fatal("invalid request message:", err)
 	}
-	var cc CreateConfig
-	err = powerStripReq.UnmarshalCreateClientBody(&cc)
+	var cc DockerCreateConfig
+	err = powerStripReq.UnmarshalDockerCreateClientBody(&cc)
 	if err != nil {
 		t.Fatal("invalid request:", err)
 	}
@@ -139,8 +139,8 @@ func TestCreateConfigMarshal2JSONStr(t *testing.T) {
 	if err != nil {
 		t.Fatal("invalid request message:", err)
 	}
-	var cc CreateConfig
-	err = powerStripReq.UnmarshalCreateClientBody(&cc)
+	var cc DockerCreateConfig
+	err = powerStripReq.UnmarshalDockerCreateClientBody(&cc)
 	if err != nil {
 		t.Fatal("invalid request:", err)
 	}
@@ -150,25 +150,5 @@ func TestCreateConfigMarshal2JSONStr(t *testing.T) {
 	}
 	if str != validSimpleBodyWoutEscQuot {
 		t.Errorf("invalid marshaling:\ngot  %s\nwant %s", str, validSimpleBodyWoutEscQuot)
-	}
-}
-
-func TestDCMarshal2JSONStr(t *testing.T) {
-	var powerStripReq PowerstripRequest
-	err := DecodeRequest([]byte(validSimpleRequest), &powerStripReq)
-	if err != nil {
-		t.Fatal("invalid request message:", err)
-	}
-	var dc d.Config
-	err = powerStripReq.UnmarshalClientBody(&dc)
-	if err != nil {
-		t.Fatal("invalid request:", err)
-	}
-	str, err := Marshal2JSONStr(dc)
-	if err != nil {
-		t.Fatal("invalid CreateConfig:", err)
-	}
-	if str != validSimpleConfigWoutEscQuot {
-		t.Errorf("invalid marshaling:\ngot  %s\nwant %s", str, validSimpleConfigWoutEscQuot)
 	}
 }

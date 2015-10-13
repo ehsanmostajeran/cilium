@@ -47,8 +47,8 @@ var (
 )
 
 const (
-	daemonPreBaseAddr = "/daemon/cilium-adapter"
-	swarmPreBaseAddr  = "/swarm/cilium-adapter"
+	dockerDaemonPreBaseAddr = "/docker/daemon/cilium-adapter"
+	dockerSwarmPreBaseAddr  = "/docker/swarm/cilium-adapter"
 )
 
 func init() {
@@ -191,8 +191,8 @@ func main() {
 	api := rest.NewApi()
 	api.Use(rest.DefaultDevStack...)
 	router, err := rest.MakeRouter(
-		&rest.Route{"POST", daemonPreBaseAddr, DaemonRequestsHandler},
-		&rest.Route{"POST", swarmPreBaseAddr, SwarmRequestsHandler},
+		&rest.Route{"POST", dockerDaemonPreBaseAddr, DockerDaemonRequestsHandler},
+		&rest.Route{"POST", dockerSwarmPreBaseAddr, DockerSwarmRequestsHandler},
 	)
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -212,12 +212,12 @@ func main() {
 
 }
 
-func DaemonRequestsHandler(w rest.ResponseWriter, req *rest.Request) {
-	RequestsHandler(daemonPreBaseAddr, w, req)
+func DockerDaemonRequestsHandler(w rest.ResponseWriter, req *rest.Request) {
+	RequestsHandler(dockerDaemonPreBaseAddr, w, req)
 }
 
-func SwarmRequestsHandler(w rest.ResponseWriter, req *rest.Request) {
-	RequestsHandler(swarmPreBaseAddr, w, req)
+func DockerSwarmRequestsHandler(w rest.ResponseWriter, req *rest.Request) {
+	RequestsHandler(dockerSwarmPreBaseAddr, w, req)
 }
 
 func RequestsHandler(baseAddr string, w rest.ResponseWriter, req *rest.Request) {

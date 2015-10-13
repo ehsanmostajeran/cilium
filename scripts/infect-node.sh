@@ -98,7 +98,7 @@ docker run \
 	-e HOST_IP=$IP \
 	-e ELASTIC_IP=$IP \
 	-e DOCKER_HOST="tcp://$IP:$SWARM_MASTER_PORT/" \
-	cilium/cilium -l=debug -e=false
+	cilium/cilium -l=debug -e=false -P 8081
 
 cat > $ADAPTER_FILE1 << EOF
 version: 1
@@ -106,7 +106,7 @@ endpoints:
   "POST /*/containers/create":
     pre: [cilium]
 adapters:
-  cilium: http://$IP:8080/swarm/cilium-adapter
+  cilium: http://$IP:8081/docker/swarm/cilium-adapter
 EOF
 
 # powerstrip before docker swarm
@@ -128,7 +128,7 @@ endpoints:
   "POST /*/containers/create":
     pre: [cilium]
 adapters:
-  cilium: http://$IP:8080/daemon/cilium-adapter
+  cilium: http://$IP:8081/docker/daemon/cilium-adapter
 EOF
 
 # powerstrip before docker daemon
@@ -185,7 +185,7 @@ docker run \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v $statisConfigDir:/docker-collector/configs \
         cilium/docker-collector:latest \
-        -f 'cilium*' \
+        -f 'cilium.*' \
         -i 'cilium-docker-collector' \
         -l debug
 
