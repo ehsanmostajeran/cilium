@@ -103,6 +103,8 @@ docker run \
 cat > $ADAPTER_FILE1 << EOF
 version: 1
 endpoints:
+  "POST /containers/create":
+    pre: [cilium]
   "POST /*/containers/create":
     pre: [cilium]
 adapters:
@@ -110,6 +112,8 @@ adapters:
 EOF
 
 # powerstrip before docker swarm
+if [ -z "$KUBERNETES" ]
+then
 docker run \
 	-d --name cilium-powerstrip-pre-swarm \
 	-e DOCKER_HOST=$IP:$SWARM_MASTER_PORT \
@@ -117,10 +121,25 @@ docker run \
 	-v /var/run/docker.sock:/var/run/docker.sock \
 	-p $PWR_BEF_SWARM_PORT:2375 \
 	cilium/powerstrip:latest
+else
+docker run \
+	-d --name cilium-powerstrip-pre-swarm \
+	-e DOCKER_HOST=$IP:$PWR_BEF_DAEMON_PORT \
+	-v $ADAPTER_FILE1:/etc/powerstrip/adapters.yml \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	-p $PWR_BEF_SWARM_PORT:2375 \
+	cilium/powerstrip:latest
+fi
 
 cat > $ADAPTER_FILE2 << EOF
 version: 1
 endpoints:
+  "POST /containers/*/start":
+    post: [cilium]
+  "POST /containers/*/restart":
+    post: [cilium]
+  "POST /containers/create":
+    pre: [cilium]
   "POST /*/containers/*/start":
     post: [cilium]
   "POST /*/containers/*/restart":
@@ -185,7 +204,7 @@ docker run \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v $statisConfigDir:/docker-collector/configs \
         cilium/docker-collector:latest \
-        -f 'cilium.*' \
+	-f '(k8s_.*)|(cilium.*)' \
         -i 'cilium-docker-collector' \
         -l debug
 
