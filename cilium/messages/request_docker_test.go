@@ -41,7 +41,7 @@ var (
 	validSimpleBodyWoutEscQuot = strings.Replace(validSimpleBody, `\"`, `"`, -1)
 )
 
-func TestNewDockerCreateConfigFromDockerContainer(t *testing.T) {
+func TestDockerNewDockerCreateConfigFromDockerContainer(t *testing.T) {
 	cc := NewDockerCreateConfigFromDockerContainer(validContainer)
 	if cc.Name != validContainer.Name {
 		t.Errorf("invalid CreateConfig:\ngot  %s\nwant %s", cc.Name, validContainer.Name)
@@ -60,7 +60,7 @@ func TestNewDockerCreateConfigFromDockerContainer(t *testing.T) {
 	}
 }
 
-func TestMergeWith(t *testing.T) {
+func TestDockerMergeWith(t *testing.T) {
 	c1 := NewDockerCreateConfigFromDockerContainer(validContainer)
 	c2 := NewDockerCreateConfigFromDockerContainer(validContainer)
 	ccwant := NewDockerCreateConfigFromDockerContainer(validContainer)
@@ -78,7 +78,7 @@ func TestMergeWith(t *testing.T) {
 	}
 }
 
-func TestMergeWithOverwrite(t *testing.T) {
+func TestDockerMergeWithOverwrite(t *testing.T) {
 	c1 := NewDockerCreateConfigFromDockerContainer(validContainer)
 	c2 := NewDockerCreateConfigFromDockerContainer(validContainer)
 	ccwant := NewDockerCreateConfigFromDockerContainer(validContainer)
@@ -98,7 +98,7 @@ func TestMergeWithOverwrite(t *testing.T) {
 	}
 }
 
-func TestUnmarshalCreateClientBody(t *testing.T) {
+func TestDockerUnmarshalCreateClientBody(t *testing.T) {
 	var powerStripReq PowerstripRequest
 	err := DecodeRequest([]byte(validRequest), &powerStripReq)
 	if err != nil {
@@ -117,7 +117,7 @@ func TestUnmarshalCreateClientBody(t *testing.T) {
 	}
 }
 
-func TestUnmarshalClientBody(t *testing.T) {
+func TestDockerUnmarshalClientBody(t *testing.T) {
 	var powerStripReq PowerstripRequest
 	err := DecodeRequest([]byte(validRequest), &powerStripReq)
 	if err != nil {
@@ -133,7 +133,7 @@ func TestUnmarshalClientBody(t *testing.T) {
 	}
 }
 
-func TestCreateConfigMarshal2JSONStr(t *testing.T) {
+func TestDockerCreateConfigMarshal2JSONStr(t *testing.T) {
 	var powerStripReq PowerstripRequest
 	err := DecodeRequest([]byte(validSimpleRequest), &powerStripReq)
 	if err != nil {
