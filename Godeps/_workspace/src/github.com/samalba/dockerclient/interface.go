@@ -36,6 +36,7 @@ type Client interface {
 	TagImage(nameOrID string, repo string, tag string, force bool) error
 	Version() (*Version, error)
 	PullImage(name string, auth *AuthConfig) error
+	PushImage(name string, tag string, auth *AuthConfig) error
 	LoadImage(reader io.Reader) error
 	RemoveContainer(id string, force, volumes bool) error
 	ListImages(all bool) ([]*Image, error)
@@ -48,4 +49,10 @@ type Client interface {
 	ListVolumes() ([]*Volume, error)
 	RemoveVolume(name string) error
 	CreateVolume(request *VolumeCreateRequest) (*Volume, error)
+	ListNetworks(filters string) ([]*NetworkResource, error)
+	InspectNetwork(id string) (*NetworkResource, error)
+	CreateNetwork(config *NetworkCreate) (*NetworkCreateResponse, error)
+	ConnectNetwork(id, container string) error
+	DisconnectNetwork(id, container string) error
+	RemoveNetwork(id string) error
 }

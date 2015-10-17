@@ -102,6 +102,7 @@ func (client *DockerClient) doStreamRequest(method string, path string, in io.Re
 		return nil, err
 	}
 	if resp.StatusCode == 404 {
+		defer resp.Body.Close()
 		return nil, ErrNotFound
 	}
 	if resp.StatusCode >= 400 {
@@ -525,6 +526,37 @@ func (client *DockerClient) Version() (*Version, error) {
 	return version, nil
 }
 
+func (client *DockerClient) PushImage(name string, tag string, auth *AuthConfig) error {
+	v := url.Values{}
+	if tag != "" {
+		v.Set("tag", tag)
+	}
+	uri := fmt.Sprintf("/%s/images/%s/push?%s", APIVersion, url.QueryEscape(name), v.Encode())
+	req, err := http.NewRequest("POST", client.URL.String()+uri, nil)
+	if auth != nil {
+		if encodedAuth, err := auth.encode(); err != nil {
+			return err
+		} else {
+			req.Header.Add("X-Registry-Auth", encodedAuth)
+		}
+	}
+	resp, err := client.HTTPClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	var finalObj map[string]interface{}
+	for decoder := json.NewDecoder(resp.Body); err == nil; err = decoder.Decode(&finalObj) {
+	}
+	if err != io.EOF {
+		return err
+	}
+	if err, ok := finalObj["error"]; ok {
+		return fmt.Errorf("%v", err)
+	}
+	return nil
+}
+
 func (client *DockerClient) PullImage(name string, auth *AuthConfig) error {
 	v := url.Values{}
 	v.Set("fromImage", name)
@@ -777,4 +809,80 @@ func (client *DockerClient) CreateVolume(request *VolumeCreateRequest) (*Volume,
 	volume := &Volume{}
 	err = json.Unmarshal(data, volume)
 	return volume, err
+}
+
+func (client *DockerClient) ListNetworks(filters string) ([]*NetworkResource, error) {
+	uri := fmt.Sprintf("/%s/networks", APIVersion)
+
+	if filters != "" {
+		uri += "&filters=" + filters
+	}
+
+	data, err := client.doRequest("GET", uri, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := []*NetworkResource{}
+	err = json.Unmarshal(data, &ret)
+	if err != nil {
+		return nil, err
+	}
+	return ret, nil
+}
+
+func (client *DockerClient) InspectNetwork(id string) (*NetworkResource, error) {
+	uri := fmt.Sprintf("/%s/networks/%s", APIVersion, id)
+
+	data, err := client.doRequest("GET", uri, nil, nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := &NetworkResource{}
+	err = json.Unmarshal(data, ret)
+	if err != nil {
+		return nil, err
+	}
+
+	return ret, nil
+}
+
+func (client *DockerClient) CreateNetwork(config *NetworkCreate) (*NetworkCreateResponse, error) {
+	data, err := json.Marshal(config)
+	if err != nil {
+		return nil, err
+	}
+	uri := fmt.Sprintf("/%s/networks/create", APIVersion)
+	data, err = client.doRequest("POST", uri, data, nil)
+	if err != nil {
+		return nil, err
+	}
+	ret := &NetworkCreateResponse{}
+	err = json.Unmarshal(data, ret)
+	return ret, nil
+}
+
+func (client *DockerClient) ConnectNetwork(id, container string) error {
+	data, err := json.Marshal(NetworkConnect{Container: container})
+	if err != nil {
+		return err
+	}
+	uri := fmt.Sprintf("/%s/networks/%s/connect", APIVersion, id)
+	_, err = client.doRequest("POST", uri, data, nil)
+	return err
+}
+
+func (client *DockerClient) DisconnectNetwork(id, container string) error {
+	data, err := json.Marshal(NetworkDisconnect{Container: container})
+	if err != nil {
+		return err
+	}
+	uri := fmt.Sprintf("/%s/networks/%s/disconnect", APIVersion, id)
+	_, err = client.doRequest("POST", uri, data, nil)
+	return err
+}
+
+func (client *DockerClient) RemoveNetwork(id string) error {
+	uri := fmt.Sprintf("/%s/networks/%s", APIVersion, id)
+	_, err := client.doRequest("DELETE", uri, nil, nil)
+	return err
 }

@@ -26,25 +26,25 @@
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/units",
-			"Comment": "v1.4.1-6170-gdac92a8",
-			"Rev": "dac92a8afbe0900641afa00e33e84e180d432239"
+			"Comment": "v1.4.1-6973-ge3fabf3",
+			"Rev": "e3fabf3ea1548afa3d147eb6f41b8656a70569b7"
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "c9ad0ce23f68428421adfc6ced9e6123f54788a5"
+			"Rev": "412c004d923b7b89701e7a1632de83f843657a03"
 		},
 		{
 			"ImportPath": "github.com/samalba/dockerclient",
-			"Rev": "cfb489c624b635251a93e74e1e90eb0959c5367f"
+			"Rev": "ffec08181228917acac8dde69ce8a922f23a57ff"
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v2",
-			"Comment": "v2.0.7",
-			"Rev": "34055ce91f8c34ab593d35cc77fedd41b7b08baa"
+			"Comment": "v2.0.14",
+			"Rev": "1de06a68b064a4185f388a50a5f4371d855c2229"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
-			"Rev": "7ad95dd0798a40da1ccdff6dff35fd177b5edf40"
+			"Rev": "53feefa2559fb8dfa8d81baad31be332c97d6c77"
 		}
 	]
 }
