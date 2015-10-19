@@ -10,7 +10,7 @@ import (
 	upsi "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/intent"
 )
 
-func ForceNetworkRules(intent *upsi.Intent) error {
+func forceNetworkRules(intent *upsi.Intent) error {
 	log.Debug("intent %#v\n", intent)
 	//Install OVS Rules
 	return forceOVSRules(*intent.NetConf.Br, intent.NetPolicy.OVSConfig)
@@ -31,7 +31,7 @@ func forceOVSRules(bridge string, ovsConfig upsi.OVSConfig) error {
 	return nil
 }
 
-func CreateOVSRules(originIP net.IP, destinationIPs []net.IP) []string {
+func createOVSRules(originIP net.IP, destinationIPs []net.IP) []string {
 	log.Debug("originIP %+v destinationIPs %+v", originIP, destinationIPs)
 	rulesCreated := []string{}
 	for _, destinationIP := range destinationIPs {
@@ -44,9 +44,9 @@ func CreateOVSRules(originIP net.IP, destinationIPs []net.IP) []string {
 	return rulesCreated
 }
 
-// GetIPFrom gets a valid and unused IP address and IPNet from the given ipStr.
+// getIPFrom gets a valid and unused IP address and IPNet from the given ipStr.
 // If the ipStr is a IP address, returnsTODO finish
-func GetIPFrom(dbConn ucdb.Db, ipStr string) (net.IP, *net.IPNet, error) {
+func getIPFrom(dbConn ucdb.Db, ipStr string) (net.IP, *net.IPNet, error) {
 	log.Debug("")
 	incIP := func(ip net.IP) {
 		for j := len(ip) - 1; j >= 0; j-- {

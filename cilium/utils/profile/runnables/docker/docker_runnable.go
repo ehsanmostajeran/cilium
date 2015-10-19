@@ -60,3 +60,7 @@ func (dr DockerRunnable) DockerExec(hookType, reqType string, db ucdb.Db, cc *m.
 		HostConfig: (*d.HostConfig)(&dr.dockercfg.HostConfig)})
 	return nil
 }
+
+func (dr DockerRunnable) KubernetesExec(hookType, reqType string, db ucdb.Db, cc *m.KubernetesObjRef) error {
+	return nil
+}

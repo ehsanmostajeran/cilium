@@ -8,12 +8,18 @@ import (
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 )
 
-const (
-	DockerDaemonCreate = "DockerDaemonCreate"
-	DockerSwarmCreate  = "DockerSwarmCreate"
-)
-
 type Runnables map[string]PolicyRunnable
+
+const (
+	PreHook  = "pre-hook"
+	PostHook = "post-hook"
+
+	DockerSwarmCreate         = "DockerSwarmCreate"
+	DockerDaemonCreate        = "DockerDaemonCreate"
+	DockerDaemonStart         = "DockerDaemonStart"
+	DockerDaemonRestart       = "DockerDaemonRestart"
+	KubernetesMasterPodCreate = "KubernetesMasterPodCreate"
+)
 
 var (
 	runnables Runnables
@@ -38,4 +44,5 @@ func GetRunnables() Runnables {
 type PolicyRunnable interface {
 	GetRunnableFrom(users []up.User, policies []up.PolicySource) PolicyRunnable
 	DockerExec(hookType, reqType string, db ucdb.Db, cc *m.DockerCreateConfig) error
+	KubernetesExec(hookType, reqType string, db ucdb.Db, cc *m.KubernetesObjRef) error
 }
