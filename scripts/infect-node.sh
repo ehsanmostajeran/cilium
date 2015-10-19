@@ -7,6 +7,10 @@ PWR_BEF_DAEMON_PORT="2371"
 SWARM_MASTER_PORT="2373"
 PWR_BEF_SWARM_PORT="2375"
 CONSUL_PORT="8500"
+PWR_BEF_KUB_MASTER="8083"
+CILIUM_PORT="8081"
+K8S_PORT="8080"
+IS_MASTER=$NET_IP
 WORKDIR="$(mktemp -d)/cilium"
 CONSUL_DIR="$WORKDIR/consul"
 POWRSTRIP_DIR="$WORKDIR/powerstrip/swarm/local"
@@ -14,6 +18,7 @@ mkdir -p "$POWRSTRIP_DIR"
 mkdir -p "$CONSUL_DIR"
 ADAPTER_FILE1="$POWRSTRIP_DIR/adapters-local-1.yml"
 ADAPTER_FILE2="$POWRSTRIP_DIR/adapters-local-2.yml"
+ADAPTER_FILE3="$POWRSTRIP_DIR/adapters-local-3.yml"
 
 function listIPs() {
 	local __localip __interface __ip
@@ -98,7 +103,7 @@ docker run \
 	-e HOST_IP=$IP \
 	-e ELASTIC_IP=$IP \
 	-e DOCKER_HOST="tcp://$IP:$SWARM_MASTER_PORT/" \
-	cilium/cilium -l=debug -e=false -P 8081
+	cilium/cilium -l=debug -e=false -P $CILIUM_PORT
 
 cat > $ADAPTER_FILE1 << EOF
 version: 1
@@ -108,28 +113,8 @@ endpoints:
   "POST /*/containers/create":
     pre: [cilium]
 adapters:
-  cilium: http://$IP:8081/docker/swarm/cilium-adapter
+  cilium: http://$IP:$CILIUM_PORT/docker/swarm/cilium-adapter
 EOF
-
-# powerstrip before docker swarm
-if [ -z "$KUBERNETES" ]
-then
-docker run \
-	-d --name cilium-powerstrip-pre-swarm \
-	-e DOCKER_HOST=$IP:$SWARM_MASTER_PORT \
-	-v $ADAPTER_FILE1:/etc/powerstrip/adapters.yml \
-	-v /var/run/docker.sock:/var/run/docker.sock \
-	-p $PWR_BEF_SWARM_PORT:2375 \
-	cilium/powerstrip:latest
-else
-docker run \
-	-d --name cilium-powerstrip-pre-swarm \
-	-e DOCKER_HOST=$IP:$PWR_BEF_DAEMON_PORT \
-	-v $ADAPTER_FILE1:/etc/powerstrip/adapters.yml \
-	-v /var/run/docker.sock:/var/run/docker.sock \
-	-p $PWR_BEF_SWARM_PORT:2375 \
-	cilium/powerstrip:latest
-fi
 
 cat > $ADAPTER_FILE2 << EOF
 version: 1
@@ -147,8 +132,47 @@ endpoints:
   "POST /*/containers/create":
     pre: [cilium]
 adapters:
-  cilium: http://$IP:8081/docker/daemon/cilium-adapter
+  cilium: http://$IP:$CILIUM_PORT/docker/daemon/cilium-adapter
 EOF
+
+cat > $ADAPTER_FILE3 << EOF
+version: 1
+endpoints:
+  "POST /api/v1/namespaces/*/pods":
+    pre: [cilium]
+adapters:
+  cilium: http://$IP:$CILIUM_PORT/kubernetes/master/cilium-adapter
+EOF
+
+# powerstrip before docker swarm
+if [ -z "$KUBERNETES" ]
+then
+docker run \
+	-d --name cilium-powerstrip-pre-swarm \
+	-e DOCKER_HOST=$IP:$SWARM_MASTER_PORT \
+	-v $ADAPTER_FILE1:/etc/powerstrip/adapters.yml \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	-p $PWR_BEF_SWARM_PORT:2375 \
+	cilium/powerstrip:latest
+else
+if [ -n "$IS_MASTER" ]
+then
+docker run \
+	-d --name cilium-powerstrip-pre-k8s-master \
+	-e KUBE_SERVER="tcp://$IP:$K8S_PORT" \
+	-v $ADAPTER_FILE3:/etc/powerstrip/adapters.yml \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	-p $PWR_BEF_KUB_MASTER:8080 \
+	cilium/powerstrip:kubernetes
+fi
+docker run \
+	-d --name cilium-powerstrip-pre-pwr-daemon \
+	-e DOCKER_HOST=$IP:$PWR_BEF_DAEMON_PORT \
+	-v $ADAPTER_FILE1:/etc/powerstrip/adapters.yml \
+	-v /var/run/docker.sock:/var/run/docker.sock \
+	-p $PWR_BEF_SWARM_PORT:2375 \
+	cilium/powerstrip:latest
+fi
 
 # powerstrip before docker daemon
 docker run \
