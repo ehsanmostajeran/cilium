@@ -9,6 +9,8 @@ Vagrant.configure(2) do |config|
   config.vm.provision "shell", inline: <<-SHELL
   sudo apt-get update
   sudo su -c 'wget -qO- https://get.docker.com/ | sh'
+  sudo su -c 'curl -LSsl -o /usr/local/bin/swarm-master https://raw.githubusercontent.com/cilium-team/cilium/master/scripts/swarm-master.sh'
+  sudo chmod +x /usr/local/bin/swarm-master
   sudo dpkg -i /home/vagrant/cilium/vagrant/openvswitch-switch_2.4.0-1_amd64.deb /home/vagrant/cilium/vagrant/openvswitch-common_2.4.0-1_amd64.deb
   sudo cp /home/vagrant/cilium/vagrant/dockerconfig /etc/default/docker
   sudo service docker restart
