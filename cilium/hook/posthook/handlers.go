@@ -238,6 +238,15 @@ func (p PostHook) postHookKubernetes(endPoint string, pphreq PowerstripPostHookR
 		log.Info("There aren't any policies for the giving labels.")
 		return defaultRequest(cont)
 	}
+	
+	// We want to make sure the policies that we get are for the same Kind for
+	// the request we have received or we could end up trying to apply a Pod
+	// configuration into a ReplicationController for example.
+	policiesKind := up.FilterPoliciesByKubernetesKind(policies, kubernetesObjRef.Kind)
+	if policiesKind == nil || len(policiesKind) == 0 {
+		log.Info("There aren't any policies for the giving kind.")
+		return defaultRequest(cont)
+	}
 
 	for _, runnables := range upr.GetRunnables() {
 		runnable := runnables.GetRunnableFrom(users, policies)

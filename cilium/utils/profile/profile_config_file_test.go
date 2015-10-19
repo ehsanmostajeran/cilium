@@ -299,3 +299,41 @@ func TestGetKubernetesConfigs(t *testing.T) {
 		}
 	}
 }
+
+func TestFilterPoliciesByKubernetesKind(t *testing.T) {
+	or1 := upsk.ObjectReference{Kind: "fooKind"}
+	rootPolicy := PolicySource{
+		Owner: "root",
+		Policies: []Policy{
+			Policy{
+				Name:             "something",
+				Owner:            "root",
+				Coverage:         Coverage{Labels: map[string]string{"com.compose.dev": "foo"}},
+				DockerConfig:     upsd.DockerConfig{},
+				IntentConfig:     upsi.IntentConfig{},
+				KubernetesConfig: upsk.KubernetesConfig{ObjectReference: or1},
+			},
+		},
+	}
+	or2 := upsk.ObjectReference{Kind: "barKind"}
+	usr1Policy := PolicySource{
+		Owner: "usr1",
+		Policies: []Policy{
+			Policy{
+				Name:             "something2",
+				Owner:            "usr2",
+				Coverage:         Coverage{Labels: map[string]string{"com.compose.dev": "foo"}},
+				DockerConfig:     upsd.DockerConfig{},
+				KubernetesConfig: upsk.KubernetesConfig{ObjectReference: or2},
+			},
+		},
+	}
+	filteredPlcy := FilterPoliciesByKubernetesKind([]PolicySource{rootPolicy, usr1Policy}, "fooKind")
+	if len(filteredPlcy) != 1 {
+		t.Errorf("invalid number of filtered policies:\ngot  %d\nwant %d", filteredPlcy, 1)
+	} else {
+		if !reflect.DeepEqual(filteredPlcy[0], rootPolicy) {
+			t.Errorf("invalid filtered policies:\ngot  %+v\nwant %+v", filteredPlcy[0], rootPolicy)
+		}
+	}
+}

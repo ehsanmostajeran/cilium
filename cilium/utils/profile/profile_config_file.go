@@ -28,7 +28,7 @@ type Policy struct {
 // FilterPoliciesByUser returns a slice of PolicySource where the Owner value is
 // the same as the name of the given user.
 func FilterPoliciesByUser(policies []PolicySource, user User) []PolicySource {
-	filteredPolicy := make([]PolicySource, 0, len(policies))
+	filteredPolicy := []PolicySource{}
 	for _, policy := range policies {
 		if policy.Owner == user.Name {
 			filteredPolicy = append(filteredPolicy, policy)
@@ -87,4 +87,26 @@ func GetKubernetesConfigs(policiesSource []PolicySource) []upsk.KubernetesConfig
 		}
 	}
 	return kubernetesConfigs
+}
+
+// FilterPoliciesByKubernetesKind returns a slice of PolicySource where the Kind
+// value is the same as the given Kind.
+func FilterPoliciesByKubernetesKind(policies []PolicySource, kind string) []PolicySource {
+	filteredOwnerPolicy := map[string][]Policy{}
+	for _, policy := range policies {
+		for _, policyOwner := range policy.Policies {
+			if policyOwner.KubernetesConfig.ObjectReference.Kind == kind {
+				filteredOwnerPolicy[policy.Owner] = append(filteredOwnerPolicy[policy.Owner], policyOwner)
+			}
+		}
+	}
+	filteredPolicy := []PolicySource{}
+	for k, v := range filteredOwnerPolicy {
+		ps := PolicySource{
+			Owner:    k,
+			Policies: v,
+		}
+		filteredPolicy = append(filteredPolicy, ps)
+	}
+	return filteredPolicy
 }

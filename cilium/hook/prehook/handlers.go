@@ -197,9 +197,18 @@ func (p PreHook) preHookKubernetes(endPoint string, pphreq PowerstripPreHookRequ
 		log.Info("There aren't any policies for the giving labels.")
 		return defaultRequest(cont)
 	}
+	
+	// We want to make sure the policies that we get are for the same Kind for
+	// the request we have received or we could end up trying to apply a Pod
+	// configuration into a ReplicationController for example.
+	policiesKind := up.FilterPoliciesByKubernetesKind(policies, kubernetesObjRef.Kind)
+	if policiesKind == nil || len(policiesKind) == 0 {
+		log.Info("There aren't any policies for the giving kind.")
+		return defaultRequest(cont)
+	}
 
 	for _, runnables := range upr.GetRunnables() {
-		runnable := runnables.GetRunnableFrom(users, policies)
+		runnable := runnables.GetRunnableFrom(users, policiesKind)
 		log.Info("Loaded and merged policy for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, runnable)
 		if err = runnable.KubernetesExec(Type, endPoint, p.dbConn, &kubernetesObjRef); err != nil {
 			return PowerstripPreHookResponse{}, err
