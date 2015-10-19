@@ -1,0 +1,81 @@
+--- master.sh.orig	2015-10-14 02:26:50.287568234 +0100
++++ master.sh	2015-10-14 02:25:51.619136830 +0100
+@@ -19,6 +19,22 @@
+ 
+ set -e
+ 
++# See if there's a different DOCKER_ENDPOINT set
++if [ -z ${DOCKER_ENDPOINT} ]; then
++    DOCKER_ENDPOINT="unix:///var/run/docker.sock"
++    echo "DOCKER_ENDPOINT not set, using default: ${DOCKER_ENDPOINT}"
++else
++    echo "Docker endpoint is set to: ${DOCKER_ENDPOINT}"
++fi
++
++# See if there's a different IP set
++if [ -z ${IP} ]; then
++	IP=$(hostname -i)
++    echo "IP not set, using default: ${IP}"
++else
++    echo "IP is set to: ${IP}"
++fi
++
+ # Make sure docker daemon is running
+ if ( ! ps -ef | grep "/usr/bin/docker" | grep -v 'grep' &> /dev/null ); then
+     echo "Docker is not running on this machine!"
+@@ -53,7 +69,7 @@
+         *64)
+             ;;
+          *)
+-            echo "Error: We currently only support 64-bit platforms."       
++            echo "Error: We currently only support 64-bit platforms."
+             exit 1
+             ;;
+     esac
+@@ -90,7 +106,7 @@
+ # Start the bootstrap daemon
+ bootstrap_daemon() {
+     sudo -b docker -d -H unix:///var/run/docker-bootstrap.sock -p /var/run/docker-bootstrap.pid --iptables=false --ip-masq=false --bridge=none --graph=/var/lib/docker-bootstrap 2> /var/log/docker-bootstrap.log 1> /dev/null
+-    
++
+     sleep 5
+ }
+ 
+@@ -98,7 +114,7 @@
+ DOCKER_CONF=""
+ 
+ start_k8s(){
+-    # Start etcd 
++    # Start etcd
+     docker -H unix:///var/run/docker-bootstrap.sock run --restart=always --net=host -d gcr.io/google_containers/etcd:2.0.12 /usr/local/bin/etcd --addr=127.0.0.1:4001 --bind-addr=0.0.0.0:4001 --data-dir=/var/etcd/data
+ 
+     sleep 5
+@@ -146,6 +162,9 @@
+     # sleep a little bit
+     sleep 5
+ 
++    # Start cilium
++    ../../../entrypoint.sh infect
++
+     # Start kubelet & proxy, then start master components as pods
+     docker run \
+         --net=host \
+@@ -165,14 +184,15 @@
+         --hostname-override=127.0.0.1 \
+         --config=/etc/kubernetes/manifests-multi \
+         --cluster-dns=10.0.0.10 \
+-        --cluster-domain=cluster.local
+-    
++        --cluster-domain=cluster.local \
++	--docker-endpoint="${DOCKER_ENDPOINT}"
++
+     docker run \
+         -d \
+         --net=host \
+         --privileged \
+         gcr.io/google_containers/hyperkube:v${K8S_VERSION} \
+-        /hyperkube proxy --master=http://127.0.0.1:8080 --v=2   
++        /hyperkube proxy --master=http://127.0.0.1:8080 --v=2
+ }
+ 
+ echo "Detecting your OS distro ..."

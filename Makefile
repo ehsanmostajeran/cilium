@@ -70,6 +70,9 @@ setup-vagrant-machines: clean-swarm-vms
 	@vagrant snapshot take node1 all-installed
 	@vagrant snapshot take node2 all-installed
 
+setup-kubernetes:
+	@./scripts/setup-kubernetes.sh
+
 infect:
 	@./scripts/infect-node.sh
 
