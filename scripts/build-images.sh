@@ -25,11 +25,13 @@ cilium/docker-collector:latest \
 cilium/compose-example:latest \
 "debug_shell.ditar" \
 cilium/debug_shell:latest \
+"powerstrip-kubernetes.ditar" \
+cilium/powerstrip:kubernetes \
 )
 
 echo "Pulling necessary images from DockerHub..."
 for ((i=0; i<"${#docker_images[@]}"; i+=2)); do
-	docker pull "${docker_images["$((i+1))"]}"
+    docker pull "${docker_images["$((i+1))"]}"
 done
 
 echo "Saving images from this machine as tar so they could be deployed on swarm nodes"
