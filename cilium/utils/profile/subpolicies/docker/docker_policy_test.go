@@ -180,7 +180,7 @@ func TestConfigScan(t *testing.T) {
 	}
 }
 
-func TestOverwriteWith(t *testing.T) {
+func TestDockerOverwriteWith(t *testing.T) {
 	var c1, c2, cwant Config
 	if err := json.Unmarshal([]byte(cjson), &cwant); err != nil {
 		t.Fatalf("error while unmarshalling cjson: %s", err)

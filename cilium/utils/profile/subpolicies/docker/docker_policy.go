@@ -58,7 +58,7 @@ func (c *Config) Scan(input interface{}) error {
 }
 
 // OverwriteWith overwrites values with the ones from `other` Config if those
-// ones aren't nil.
+// ones aren't nil and if they have an `omitempty` tag.
 func (c *Config) OverwriteWith(other Config) error {
 	if strOther, err := other.Value(); err != nil {
 		return err

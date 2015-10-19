@@ -49,7 +49,7 @@ func (ic *IntentConfig) MergeWithOverwrite(other IntentConfig) {
 }
 
 // OverwriteWith overwrites values with the ones from `other` IntentConfig if
-// those ones aren't nil.
+// those ones aren't nil and if they have an `omitempty` tag.
 func (ic *IntentConfig) OverwriteWith(other IntentConfig) {
 	ic.Priority = other.Priority
 	ic.Config.OverwriteWith(other.Config)
