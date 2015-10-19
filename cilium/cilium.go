@@ -19,6 +19,7 @@ import (
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 	uprd "github.com/cilium-team/cilium/cilium/utils/profile/runnables/docker"
 	upri "github.com/cilium-team/cilium/cilium/utils/profile/runnables/intent"
+	uprk "github.com/cilium-team/cilium/cilium/utils/profile/runnables/kubernetes"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/ant0ine/go-json-rest/rest"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
@@ -47,8 +48,9 @@ var (
 )
 
 const (
-	dockerDaemonPreBaseAddr = "/docker/daemon/cilium-adapter"
-	dockerSwarmPreBaseAddr  = "/docker/swarm/cilium-adapter"
+	dockerDaemonPreBaseAddr     = "/docker/daemon/cilium-adapter"
+	dockerSwarmPreBaseAddr      = "/docker/swarm/cilium-adapter"
+	kubernetesMasterPreBaseAddr = "/kubernetes/master/cilium-adapter"
 )
 
 func init() {
@@ -80,6 +82,9 @@ func setupRunnables() {
 		log.Fatal("Failed while registering a runnable", err)
 	}
 	if err := upr.Register(upri.Name, upri.IntentRunnable{}); err != nil {
+		log.Fatal("Failed while registering a runnable", err)
+	}
+	if err := upr.Register(uprk.Name, uprk.KubernetesRunnable{}); err != nil {
 		log.Fatal("Failed while registering a runnable", err)
 	}
 }
@@ -193,6 +198,7 @@ func main() {
 	router, err := rest.MakeRouter(
 		&rest.Route{"POST", dockerDaemonPreBaseAddr, DockerDaemonRequestsHandler},
 		&rest.Route{"POST", dockerSwarmPreBaseAddr, DockerSwarmRequestsHandler},
+		&rest.Route{"POST", kubernetesMasterPreBaseAddr, KubernetesMasterRequestHandler},
 	)
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -218,6 +224,10 @@ func DockerDaemonRequestsHandler(w rest.ResponseWriter, req *rest.Request) {
 
 func DockerSwarmRequestsHandler(w rest.ResponseWriter, req *rest.Request) {
 	RequestsHandler(dockerSwarmPreBaseAddr, w, req)
+}
+
+func KubernetesMasterRequestHandler(w rest.ResponseWriter, req *rest.Request) {
+	RequestsHandler(kubernetesMasterPreBaseAddr, w, req)
 }
 
 func RequestsHandler(baseAddr string, w rest.ResponseWriter, req *rest.Request) {

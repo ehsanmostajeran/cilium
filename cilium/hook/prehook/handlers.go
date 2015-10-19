@@ -18,13 +18,15 @@ import (
 var log = logging.MustGetLogger("cilium")
 
 const (
-	Type   = "pre-hook"
-	Docker = "Docker"
+	Type       = "pre-hook"
+	Docker     = "Docker"
+	Kubernetes = "Kubernetes"
 )
 
 var handlers = map[string]string{
-	`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:  "DockerSwarmCreate",
-	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`: "DockerDaemonCreate",
+	`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:           upr.DockerSwarmCreate,
+	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:          upr.DockerDaemonCreate,
+	`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/pods(\?.*)?`: upr.KubernetesMasterPodCreate,
 }
 
 type PreHook struct {
@@ -107,7 +109,10 @@ func (p PreHook) preHook(endPoint string, cont []byte) (m.Response, error) {
 
 	if strings.HasPrefix(endPoint, Docker) {
 		return p.preHookDocker(endPoint, pphreq, users, cont)
+	} else if strings.HasPrefix(endPoint, Kubernetes) {
+		return p.preHookKubernetes(endPoint, pphreq, users, cont)
 	}
+
 	return defaultRequest(cont)
 }
 
@@ -158,6 +163,57 @@ func (p PreHook) preHookDocker(endPoint string, pphreq PowerstripPreHookRequest,
 	}
 
 	log.Info("Response created for container %s: %#v", createConfig.Name, respCreateConfig)
+	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
+			pphreq.ClientRequest.Request,
+			respCreateConfig),
+		nil
+}
+
+// preHookKubernetes deals with pre-hook requests that are kubernetes specific.
+func (p PreHook) preHookKubernetes(endPoint string, pphreq PowerstripPreHookRequest,
+	users []up.User, cont []byte) (m.Response, error) {
+	log.Debug("")
+
+	var kubernetesObjRef m.KubernetesObjRef
+	if err := pphreq.UnmarshalKubernetesObjRefClientBody(&kubernetesObjRef); err != nil {
+		log.Error("Error: %+v", err)
+		return defaultRequest(cont)
+	}
+
+	log.Debug("kubernetesObjRef: %+v", kubernetesObjRef)
+
+	labels, err := kubernetesObjRef.GetLabels()
+	if err != nil {
+		log.Info("Request has empty labels: %+v", err)
+		return defaultRequest(cont)
+	}
+
+	policies, err := p.dbConn.GetPoliciesThatCovers(labels)
+	if err != nil {
+		log.Error("Error: %+v", err)
+		return defaultRequest(cont)
+	}
+	if policies == nil || len(policies) == 0 {
+		log.Info("There aren't any policies for the giving labels.")
+		return defaultRequest(cont)
+	}
+
+	for _, runnables := range upr.GetRunnables() {
+		runnable := runnables.GetRunnableFrom(users, policies)
+		log.Info("Loaded and merged policy for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, runnable)
+		if err = runnable.KubernetesExec(Type, endPoint, p.dbConn, &kubernetesObjRef); err != nil {
+			return PowerstripPreHookResponse{}, err
+		}
+	}
+
+	log.Debug("Response kubernetesObjRef: %+v", kubernetesObjRef)
+
+	respCreateConfig, err := kubernetesObjRef.Marshal2JSONStr()
+	if err != nil {
+		return PowerstripPreHookResponse{}, err
+	}
+
+	log.Info("Response created for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, respCreateConfig)
 	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
 			pphreq.ClientRequest.Request,
 			respCreateConfig),

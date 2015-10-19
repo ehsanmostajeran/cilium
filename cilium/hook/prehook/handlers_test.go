@@ -15,10 +15,11 @@ import (
 )
 
 var (
-	validType          = `"pre-hook"`
-	validPPV           = 1
-	validRequestHeader = `"/v1.15/containers/create?name=hello-world"`
-	validBody          = `{\"Hostname\":\"myhostname\",\"Domainname\":\"\",\"User\":\"\",\"AttachStdin\":false,\"AttachStdout\":false,` +
+	validType                    = `"pre-hook"`
+	validPPV                     = 1
+	validDockerRequestHeader     = `"/v1.15/containers/create?name=hello-world"`
+	validKubernetesRequestHeader = `"/v1/pods"`
+	validBody                    = `{\"Hostname\":\"myhostname\",\"Domainname\":\"\",\"User\":\"\",\"AttachStdin\":false,\"AttachStdout\":false,` +
 		`\"AttachStderr\":false,\"ExposedPorts\":{\"53/udp\":{},\"80/tcp\":{}},\"Tty\":false,\"OpenStdin\":false,` +
 		`\"StdinOnce\":false,\"Env\":null,\"Cmd\":null,\"Image\":\"fooandbar\",` +
 		`\"Volumes\":null,\"VolumeDriver\":\"\",\"WorkingDir\":\"\",\"Entrypoint\":null,\"NetworkDisabled\":false,` +
@@ -34,16 +35,17 @@ var (
 	validMethod  = `POST`
 	validRequest = `{"Type": ` + validType + `, "PowerstripProtocolVersion": ` +
 		strconv.Itoa(validPPV) + `, "ClientRequest": {"Body": "` + validBody + `", ` +
-		`"Request": ` + validRequestHeader + `, "Method": "` + validMethod + `"}}`
+		`"Request": ` + validDockerRequestHeader + `, "Method": "` + validMethod + `"}}`
 	validWantBodyWoutEscQuot = `{"Hostname":"myhostname","ExposedPorts":{"53/udp":{},"80/tcp":{}},` +
 		`"Cmd":null,"Image":"fooandbar","Entrypoint":null,"Labels":{"com.docker.swarm.id":"123456"},` +
 		`"HostConfig":{"PortBindings":{"53/udp":[{"HostPort":"53"}],"80/tcp":[{"HostPort":"80"}]},` +
 		`"Dns":["1.2.3.4"],"NetworkMode":"bridge","RestartPolicy":{"Name":"no"},"LogConfig":{}}}`
-	validBodyWoutEscQuot       = strings.Replace(validBody, `\"`, `"`, -1)
-	validRequestHeaderWoutQuot = strings.Replace(validRequestHeader, `"`, ``, -1)
+	validBodyWoutEscQuot                 = strings.Replace(validBody, `\"`, `"`, -1)
+	validDockerRequestHeaderWoutQuot     = strings.Replace(validDockerRequestHeader, `"`, ``, -1)
+	validKubernetesRequestHeaderWoutQuot = strings.Replace(validKubernetesRequestHeader, `"`, ``, -1)
 
-	invalidRequest       = `"Request": "/nonque/create?name=hello-world"`
-	invalidRequestHeader = `/v1.15/foo/bar?name=hello-world`
+	invalidRequest             = `"Request": "/nonque/create?name=hello-world"`
+	invalidDockerRequestHeader = `/v1.15/foo/bar?name=hello-world`
 )
 
 func TestDefaultValidRequest(t *testing.T) {
@@ -63,10 +65,10 @@ func TestDefaultValidRequest(t *testing.T) {
 			pphr.PowerstripProtocolVersion,
 			m.PowerstripProtocolVersion)
 	}
-	if pphr.ModifiedClientRequest.Request != validRequestHeaderWoutQuot {
+	if pphr.ModifiedClientRequest.Request != validDockerRequestHeaderWoutQuot {
 		t.Errorf("invalid ModifiedClientRequest.Request:\ngot  %s\nwant %s",
 			pphr.ModifiedClientRequest.Request,
-			validRequestHeaderWoutQuot)
+			validDockerRequestHeaderWoutQuot)
 	}
 	if pphr.ModifiedClientRequest.Method != validMethod {
 		t.Errorf("invalid ModifiedClientRequest.Method:\ngot  %s\nwant %s",
@@ -123,7 +125,7 @@ func TestPreHook(t *testing.T) {
 
 	upr.Register("docker-config", uprd.DockerRunnable{})
 
-	defaultPPHR, err := ph.preHook("DockerSwarmCreate", []byte(validRequest))
+	defaultPPHR, err := ph.preHook(upr.DockerSwarmCreate, []byte(validRequest))
 	if err != nil {
 		t.Error("error occured while executing preHook", err)
 	}
@@ -139,10 +141,10 @@ func TestPreHook(t *testing.T) {
 			pphr.PowerstripProtocolVersion,
 			m.PowerstripProtocolVersion)
 	}
-	if pphr.ModifiedClientRequest.Request != validRequestHeaderWoutQuot {
+	if pphr.ModifiedClientRequest.Request != validDockerRequestHeaderWoutQuot {
 		t.Errorf("invalid ModifiedClientRequest.Request:\ngot  %s\nwant %s",
 			pphr.ModifiedClientRequest.Request,
-			validRequestHeaderWoutQuot)
+			validDockerRequestHeaderWoutQuot)
 	}
 	if pphr.ModifiedClientRequest.Method != validMethod {
 		t.Errorf("invalid ModifiedClientRequest.Method:\ngot  %s\nwant %s",
@@ -183,10 +185,10 @@ func TestPreHookInvalid(t *testing.T) {
 			pphr.PowerstripProtocolVersion,
 			m.PowerstripProtocolVersion)
 	}
-	if pphr.ModifiedClientRequest.Request != validRequestHeaderWoutQuot {
+	if pphr.ModifiedClientRequest.Request != validDockerRequestHeaderWoutQuot {
 		t.Errorf("invalid ModifiedClientRequest.Request:\ngot  %s\nwant %s",
 			pphr.ModifiedClientRequest.Request,
-			validRequestHeaderWoutQuot)
+			validDockerRequestHeaderWoutQuot)
 	}
 	if pphr.ModifiedClientRequest.Method != validMethod {
 		t.Errorf("invalid ModifiedClientRequest.Method:\ngot  %s\nwant %s",
@@ -201,21 +203,38 @@ func TestPreHookInvalid(t *testing.T) {
 }
 
 func TestParseRequest(t *testing.T) {
-	tests := []struct {
+	dockerTests := []struct {
 		baseAddr string
 		want     string
 	}{
-		{`/docker/swarm/cilium-adapter`, "DockerSwarmCreate"},
-		{`/docker/daemon/cilium-adapter`, "DockerDaemonCreate"},
+		{`/docker/swarm/cilium-adapter`, upr.DockerSwarmCreate},
+		{`/docker/daemon/cilium-adapter`, upr.DockerDaemonCreate},
 		{`/something`, "Default"},
 	}
-	for _, tt := range tests {
-		if got := parseRequest(tt.baseAddr, validRequestHeaderWoutQuot); got != tt.want {
+	for _, tt := range dockerTests {
+		if got := parseRequest(tt.baseAddr, validDockerRequestHeaderWoutQuot); got != tt.want {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, tt.want)
 		}
 	}
-	for _, tt := range tests {
-		if got := parseRequest(tt.baseAddr, invalidRequestHeader); got != "Default" {
+	for _, tt := range dockerTests {
+		if got := parseRequest(tt.baseAddr, invalidDockerRequestHeader); got != "Default" {
+			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, "Default")
+		}
+	}
+
+	kubernetesTests := []struct {
+		baseAddr string
+		want     string
+	}{
+		{`/kubernetes/master/cilium-adapter/api/v1/namespaces`, upr.KubernetesMasterPodCreate},
+	}
+	for _, tt := range kubernetesTests {
+		if got := parseRequest(tt.baseAddr, validKubernetesRequestHeaderWoutQuot); got != tt.want {
+			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, tt.want)
+		}
+	}
+	for _, tt := range kubernetesTests {
+		if got := parseRequest(tt.baseAddr, invalidDockerRequestHeader); got != "Default" {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, "Default")
 		}
 	}

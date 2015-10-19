@@ -226,7 +226,7 @@ func TestParseRequest(t *testing.T) {
 		baseAddr string
 		want     string
 	}{
-		{`/docker/daemon/cilium-adapter`, "DockerDaemonCreate"},
+		{`/docker/daemon/cilium-adapter`, upr.DockerDaemonCreate},
 		{`/something`, "Default"},
 	}
 	testsHandlers := []struct {

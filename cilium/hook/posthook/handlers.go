@@ -20,14 +20,15 @@ import (
 var log = logging.MustGetLogger("cilium")
 
 const (
-	Type   = "post-hook"
-	Docker = "Docker"
+	Type       = "post-hook"
+	Docker     = "Docker"
+	Kubernetes = "Kubernetes"
 )
 
 var handlers = map[string]string{
-	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:     "DockerDaemonCreate",
-	`/docker/daemon/cilium-adapter/.*/containers/.*/start(\?.*)?`:   "DockerDaemonStart",
-	`/docker/daemon/cilium-adapter/.*/containers/.*/restart(\?.*)?`: "DockerDaemonRestart",
+	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:     upr.DockerDaemonCreate,
+	`/docker/daemon/cilium-adapter/.*/containers/.*/start(\?.*)?`:   upr.DockerDaemonStart,
+	`/docker/daemon/cilium-adapter/.*/containers/.*/restart(\?.*)?`: upr.DockerDaemonRestart,
 }
 
 type PostHook struct {
@@ -154,7 +155,10 @@ func (p PostHook) postHook(endPoint string, cont []byte) (m.Response, error) {
 
 	if strings.HasPrefix(endPoint, Docker) {
 		return p.postHookDocker(endPoint, pphreq, users, cont)
+	} else if strings.HasPrefix(endPoint, Kubernetes) {
+		return p.postHookKubernetes(endPoint, pphreq, users, cont)
 	}
+
 	return defaultRequest(cont)
 }
 
@@ -189,7 +193,7 @@ func (p PostHook) postHookDocker(endPoint string, pphreq PowerstripPostHookReque
 
 	for _, runnables := range upr.GetRunnables() {
 		runnable := runnables.GetRunnableFrom(users, policies)
-		log.Info("Loaded and merged policy for container %s: %#v", createConfig.ID, runnable)
+		log.Info("Loaded and merged policy for container '%s': %#v", createConfig.ID, runnable)
 		if err = runnable.DockerExec(Type, endPoint, p.dbConn, &createConfig); err != nil {
 			return &PowerstripPostHookResponse{}, err
 		}
@@ -198,7 +202,54 @@ func (p PostHook) postHookDocker(endPoint string, pphreq PowerstripPostHookReque
 	log.Debug("Response ClientBody Config: %+v", createConfig.Config)
 	log.Debug("Response ClientBody HostConfig: %+v", createConfig.HostConfig)
 
-	log.Info("Posthook executed successfully for container %s", createConfig.ID)
+	log.Info("Posthook successfully executed for container '%s'", createConfig.ID)
+	return NewPowerstripPostHookResponse(pphreq.ServerResponse.ContentType,
+			pphreq.ServerResponse.Body,
+			pphreq.ServerResponse.Code),
+		nil
+}
+
+// postHookKubernetes deals with post-hook requests that are kubernetes
+// specific.
+func (p PostHook) postHookKubernetes(endPoint string, pphreq PowerstripPostHookRequest,
+	users []up.User, cont []byte) (m.Response, error) {
+	log.Debug("")
+
+	var kubernetesObjRef m.KubernetesObjRef
+	if err := pphreq.UnmarshalKubernetesObjRefClientBody(&kubernetesObjRef); err != nil {
+		log.Error("Error: %+v", err)
+		return defaultRequest(cont)
+	}
+
+	log.Debug("kubernetesObjRef: %+v", kubernetesObjRef)
+
+	labels, err := kubernetesObjRef.GetLabels()
+	if err != nil {
+		log.Info("Request has empty labels: %+v", err)
+		return defaultRequest(cont)
+	}
+
+	policies, err := p.dbConn.GetPoliciesThatCovers(labels)
+	if err != nil {
+		log.Error("Error: %+v", err)
+		return defaultRequest(cont)
+	}
+	if policies == nil || len(policies) == 0 {
+		log.Info("There aren't any policies for the giving labels.")
+		return defaultRequest(cont)
+	}
+
+	for _, runnables := range upr.GetRunnables() {
+		runnable := runnables.GetRunnableFrom(users, policies)
+		log.Info("Loaded and merged policy for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, runnable)
+		if err = runnable.KubernetesExec(Type, endPoint, p.dbConn, &kubernetesObjRef); err != nil {
+			return PowerstripPostHookResponse{}, err
+		}
+	}
+
+	log.Debug("Response kubernetesObjRef: %+v", kubernetesObjRef)
+
+	log.Info("Posthook successfully executed for kubernetesObjRef '%s'", kubernetesObjRef.Name)
 	return NewPowerstripPostHookResponse(pphreq.ServerResponse.ContentType,
 			pphreq.ServerResponse.Body,
 			pphreq.ServerResponse.Code),
