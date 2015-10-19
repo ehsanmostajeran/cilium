@@ -8,6 +8,7 @@ import (
 
 	upsd "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/docker"
 	upsi "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/intent"
+	upsk "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/kubernetes"
 )
 
 func TestFilterPoliciesByUser(t *testing.T) {
@@ -253,6 +254,48 @@ func TestGetIntentConfigs(t *testing.T) {
 		}
 		if filteredIC[1].Priority != intentCfg2.Priority {
 			t.Errorf("invalid filtered policies:\ngot  %+v\nwant %+v", filteredIC[1], intentCfg2)
+		}
+	}
+}
+
+func TestGetKubernetesConfigs(t *testing.T) {
+	kubernetesCfg1 := upsk.KubernetesConfig{Priority: 9999}
+	kubernetesCfg2 := upsk.KubernetesConfig{Priority: 1456}
+	rootPolicy := PolicySource{
+		Owner: "root",
+		Policies: []Policy{
+			Policy{
+				Name:             "something",
+				Owner:            "root",
+				Coverage:         Coverage{Labels: map[string]string{"com.compose.dev": "foo"}},
+				DockerConfig:     upsd.DockerConfig{},
+				IntentConfig:     upsi.IntentConfig{},
+				KubernetesConfig: kubernetesCfg1,
+			},
+		},
+	}
+	usr1Policy := PolicySource{
+		Owner: "usr1",
+		Policies: []Policy{
+			Policy{
+				Name:             "something2",
+				Owner:            "usr2",
+				Coverage:         Coverage{Labels: map[string]string{"com.compose.dev": "foo"}},
+				DockerConfig:     upsd.DockerConfig{},
+				IntentConfig:     upsi.IntentConfig{},
+				KubernetesConfig: kubernetesCfg2,
+			},
+		},
+	}
+	filteredKC := GetKubernetesConfigs([]PolicySource{rootPolicy, usr1Policy})
+	if len(filteredKC) != 2 {
+		t.Errorf("invalid number of filtered policies:\ngot  %d\nwant %d", filteredKC, 2)
+	} else {
+		if filteredKC[0].Priority != kubernetesCfg1.Priority {
+			t.Errorf("invalid filtered policies:\ngot  %+v\nwant %+v", filteredKC[0], kubernetesCfg1)
+		}
+		if filteredKC[1].Priority != kubernetesCfg2.Priority {
+			t.Errorf("invalid filtered policies:\ngot  %+v\nwant %+v", filteredKC[1], kubernetesCfg2)
 		}
 	}
 }

@@ -3,6 +3,7 @@ package profile
 import (
 	upsd "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/docker"
 	upsi "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/intent"
+	upsk "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/kubernetes"
 )
 
 type ProfileFile struct {
@@ -16,11 +17,12 @@ type PolicySource struct {
 
 type Policy struct {
 	//TODO remove owner redundancy present in this structure
-	Name         string            `json:"name,omitempty" yaml:"name,omitempty"`
-	Owner        string            `json:"owner,omitempty" yaml:"owner,omitempty"`
-	Coverage     Coverage          `json:"coverage,omitempty" yaml:"coverage,omitempty"`
-	DockerConfig upsd.DockerConfig `json:"docker-config,omitempty" yaml:"docker-config,omitempty"`
-	IntentConfig upsi.IntentConfig `json:"intent-config,omitempty" yaml:"intent-config,omitempty"`
+	Name             string                `json:"name,omitempty" yaml:"name,omitempty"`
+	Owner            string                `json:"owner,omitempty" yaml:"owner,omitempty"`
+	Coverage         Coverage              `json:"coverage,omitempty" yaml:"coverage,omitempty"`
+	DockerConfig     upsd.DockerConfig     `json:"docker-config,omitempty" yaml:"docker-config,omitempty"`
+	IntentConfig     upsi.IntentConfig     `json:"intent-config,omitempty" yaml:"intent-config,omitempty"`
+	KubernetesConfig upsk.KubernetesConfig `json:"kubernetes-config,omitempty" yaml:"kubernetes-config,omitempty"`
 }
 
 // FilterPoliciesByUser returns a slice of PolicySource where the Owner value is
@@ -73,4 +75,16 @@ func GetIntentConfigs(policiesSource []PolicySource) []upsi.IntentConfig {
 		}
 	}
 	return intentConfigs
+}
+
+// GetKubernetesConfigs returns all KubernetesConfig from the given slice of
+// PolicySource.
+func GetKubernetesConfigs(policiesSource []PolicySource) []upsk.KubernetesConfig {
+	kubernetesConfigs := make([]upsk.KubernetesConfig, 0, len(policiesSource))
+	for _, policySource := range policiesSource {
+		for _, policy := range policySource.Policies {
+			kubernetesConfigs = append(kubernetesConfigs, policy.KubernetesConfig)
+		}
+	}
+	return kubernetesConfigs
 }
