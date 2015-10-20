@@ -17,7 +17,9 @@ run-kibana \
 shell \
 update-godeps \
 start-services \
-help
+help \
+setup-kubernetes \
+reset-kubernetes
 
 KERNEL:= $(shell uname -s)
 MACHINE := $(shell uname -m)
@@ -71,6 +73,11 @@ setup-vagrant-machines: clean-swarm-vms
 	@vagrant snapshot take node2 all-installed
 
 setup-kubernetes:
+	@./scripts/setup-kubernetes.sh
+
+reset-kubernetes:
+	@vagrant snapshot go node1 all-installed
+	@vagrant snapshot go node2 all-installed
 	@./scripts/setup-kubernetes.sh
 
 infect:
