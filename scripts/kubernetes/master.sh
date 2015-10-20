@@ -175,13 +175,13 @@ start_k8s(){
         -v /var/run:/var/run:rw \
         -v /:/rootfs:ro \
         -v /dev:/dev \
-        -v /var/lib/docker/:/var/lib/docker:ro \
+        -v /var/lib/docker/:/var/lib/docker:rw \
         -v /var/lib/kubelet/:/var/lib/kubelet:rw \
         gcr.io/google_containers/hyperkube:v${K8S_VERSION} \
         /hyperkube kubelet \
         --api-servers=http://localhost:8080 \
         --v=2 --address=0.0.0.0 --enable-server \
-        --hostname-override=127.0.0.1 \
+        --hostname-override="${IP}" \
         --config=/etc/kubernetes/manifests-multi \
         --cluster-dns=10.0.0.10 \
         --cluster-domain=cluster.local \

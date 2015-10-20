@@ -1,1 +1,3 @@
 subnet.env
+master.sh
+worker.sh

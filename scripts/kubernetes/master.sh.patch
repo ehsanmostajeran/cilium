@@ -1,5 +1,5 @@
---- master.sh.orig	2015-10-14 02:26:50.287568234 +0100
-+++ master.sh	2015-10-14 02:25:51.619136830 +0100
+--- master.sh.orig	2015-10-20 03:18:54.211476124 +0100
++++ master.sh	2015-10-20 03:17:31.979108287 +0100
 @@ -19,6 +19,22 @@
  
  set -e
@@ -60,8 +60,12 @@
      # Start kubelet & proxy, then start master components as pods
      docker run \
          --net=host \
-@@ -165,14 +184,15 @@
-         --hostname-override=127.0.0.1 \
+@@ -162,17 +181,18 @@
+         /hyperkube kubelet \
+         --api-servers=http://localhost:8080 \
+         --v=2 --address=0.0.0.0 --enable-server \
+-        --hostname-override=127.0.0.1 \
++        --hostname-override="${IP}" \
          --config=/etc/kubernetes/manifests-multi \
          --cluster-dns=10.0.0.10 \
 -        --cluster-domain=cluster.local
