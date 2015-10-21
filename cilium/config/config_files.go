@@ -13,7 +13,7 @@ import (
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/gopkg.in/yaml.v2"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/yaml"
 )
 
 var (

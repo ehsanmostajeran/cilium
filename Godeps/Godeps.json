@@ -29,6 +29,10 @@
 			"Rev": "87cdd01a5b33125b07801cd10716765a050c9a70"
 		},
 		{
+			"ImportPath": "github.com/cilium-team/yaml",
+			"Rev": "849bd579e9462186762b22f74a738d11f6682371"
+		},
+		{
 			"ImportPath": "github.com/davecgh/go-spew/spew",
 			"Rev": "2df174808ee097f90d259e432cc04442cf60be21"
 		},
@@ -140,10 +144,6 @@
 			"ImportPath": "gopkg.in/olivere/elastic.v2",
 			"Comment": "v2.0.14",
 			"Rev": "1de06a68b064a4185f388a50a5f4371d855c2229"
-		},
-		{
-			"ImportPath": "gopkg.in/yaml.v2",
-			"Rev": "53feefa2559fb8dfa8d81baad31be332c97d6c77"
 		},
 		{
 			"ImportPath": "k8s.io/kubernetes/pkg/api",

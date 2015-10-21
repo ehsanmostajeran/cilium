@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/mergo"
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/gopkg.in/yaml.v2"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/yaml"
 )
 
 type Intent struct {
