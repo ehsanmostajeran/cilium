@@ -197,7 +197,7 @@ func (p PreHook) preHookKubernetes(endPoint string, pphreq PowerstripPreHookRequ
 		log.Info("There aren't any policies for the giving labels.")
 		return defaultRequest(cont)
 	}
-	
+
 	// We want to make sure the policies that we get are for the same Kind for
 	// the request we have received or we could end up trying to apply a Pod
 	// configuration into a ReplicationController for example.
