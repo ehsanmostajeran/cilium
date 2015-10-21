@@ -36,7 +36,9 @@ func storePolicies(conn ucdb.Db, pf up.ProfileFile, basePath string) error {
 		for i := range profile.Policies {
 			profile.Policies[i].ReadOVSConfigFiles(basePath)
 		}
-		conn.PutPolicy(profile)
+		if err := conn.PutPolicy(profile); err != nil {
+			return err
+		}
 	}
 	return nil
 }
