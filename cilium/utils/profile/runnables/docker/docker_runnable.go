@@ -28,6 +28,9 @@ func (dr DockerRunnable) GetRunnableFrom(users []up.User, policies []up.PolicySo
 	for _, user := range users {
 		log.Debug("user %+v", user)
 		userPolicies := up.FilterPoliciesByUser(policies, user)
+		if len(userPolicies) == 0 {
+			continue
+		}
 		dockerConfigs := up.GetDockerConfigs(userPolicies)
 		upsd.OrderDockerConfigsByAscendingPriority(dockerConfigs)
 		log.Debug("Filtered dockerConfigs: %+v", dockerConfigs)

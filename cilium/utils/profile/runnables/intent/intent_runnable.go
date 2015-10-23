@@ -53,6 +53,9 @@ func (ir IntentRunnable) GetRunnableFrom(users []up.User, policies []up.PolicySo
 	for _, user := range users {
 		log.Debug("user %+v", user)
 		userPolicies := up.FilterPoliciesByUser(policies, user)
+		if len(userPolicies) == 0 {
+			continue
+		}
 		intentConfigs := up.GetIntentConfigs(userPolicies)
 		upsi.OrderIntentConfigsByAscendingPriority(intentConfigs)
 		for i, iConfig := range intentConfigs {

@@ -28,6 +28,9 @@ func (kr KubernetesRunnable) GetRunnableFrom(users []up.User, policies []up.Poli
 	for _, user := range users {
 		log.Debug("user %+v", user)
 		userPolicies := up.FilterPoliciesByUser(policies, user)
+		if len(userPolicies) == 0 {
+			continue
+		}
 		kubernetesConfigs := up.GetKubernetesConfigs(userPolicies)
 		upsk.OrderKubernetesConfigsByAscendingPriority(kubernetesConfigs)
 		log.Debug("Filtered kubernetesConfigs: %+v", kubernetesConfigs)
