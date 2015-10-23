@@ -78,13 +78,15 @@ func init() {
 
 func setupRunnables() {
 	log.Debug("Registering runnables")
+	// Order matters, we want intent to be the last one so it can perform
+	// actions based on all merged configurations and policies.
 	if err := upr.Register(uprd.Name, uprd.DockerRunnable{}); err != nil {
 		log.Fatal("Failed while registering a runnable", err)
 	}
-	if err := upr.Register(upri.Name, upri.IntentRunnable{}); err != nil {
+	if err := upr.Register(uprk.Name, uprk.KubernetesRunnable{}); err != nil {
 		log.Fatal("Failed while registering a runnable", err)
 	}
-	if err := upr.Register(uprk.Name, uprk.KubernetesRunnable{}); err != nil {
+	if err := upr.Register(upri.Name, upri.IntentRunnable{}); err != nil {
 		log.Fatal("Failed while registering a runnable", err)
 	}
 }
