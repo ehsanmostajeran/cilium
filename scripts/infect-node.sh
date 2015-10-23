@@ -140,6 +140,10 @@ version: 1
 endpoints:
   "POST /api/v1/namespaces/*/pods":
     pre: [cilium]
+  "POST /api/v1/namespaces/*/services":
+    pre: [cilium]
+  "POST /api/v1/namespaces/*/replicationcontrollers":
+    pre: [cilium]
 adapters:
   cilium: http://$IP:$CILIUM_PORT/kubernetes/master/cilium-adapter
 EOF

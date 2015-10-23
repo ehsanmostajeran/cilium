@@ -30,29 +30,38 @@ func (p PowerstripRequest) UnmarshalKubernetesObjRefClientBody(cc *KubernetesObj
 	return nil
 }
 
+func (kor KubernetesObjRef) convertTo(i interface{}) error {
+	jsonBytes, err := json.Marshal(kor.BodyObj)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(jsonBytes, i); err != nil {
+		return err
+	}
+	return nil
+}
+
 // GetLabels returns the labels of the supported kinds of Kubernetes messages.
 func (kor *KubernetesObjRef) GetLabels() (map[string]string, error) {
 	switch kor.Kind {
 	case "Pod":
 		var pod k8s.Pod
-		jsonBytes, err := json.Marshal(kor.BodyObj)
-		if err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal(jsonBytes, &pod); err != nil {
+		if err := kor.convertTo(&pod); err != nil {
 			return nil, err
 		}
 		return pod.Labels, nil
 	case "ReplicationController":
 		var rc k8s.ReplicationController
-		jsonBytes, err := json.Marshal(kor.BodyObj)
-		if err != nil {
-			return nil, err
-		}
-		if err := json.Unmarshal(jsonBytes, &rc); err != nil {
+		if err := kor.convertTo(&rc); err != nil {
 			return nil, err
 		}
 		return rc.Labels, nil
+	case "Service":
+		var s k8s.Service
+		if err := kor.convertTo(&s); err != nil {
+			return nil, err
+		}
+		return s.Labels, nil
 	}
 	return nil, errors.New("unsupported kind")
 }

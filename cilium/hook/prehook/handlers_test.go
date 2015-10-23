@@ -226,7 +226,7 @@ func TestParseRequest(t *testing.T) {
 		baseAddr string
 		want     string
 	}{
-		{`/kubernetes/master/cilium-adapter/api/v1/namespaces`, upr.KubernetesMasterPodCreate},
+		{`/kubernetes/master/cilium-adapter/api/v1/namespaces`, upr.KubernetesMasterCreate},
 	}
 	for _, tt := range kubernetesTests {
 		if got := parseRequest(tt.baseAddr, validKubernetesRequestHeaderWoutQuot); got != tt.want {

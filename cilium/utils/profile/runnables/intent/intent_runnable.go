@@ -21,7 +21,7 @@ var (
 		upr.PostHook + upr.DockerDaemonRestart: postHookDockerDaemonStart,
 	}
 	kubernetesHookHandlers = map[string]func(ucdb.Db, *upsi.Intent, *m.KubernetesObjRef) error{
-		upr.PreHook + upr.KubernetesMasterPodCreate: preHookKubernetesMasterCreate,
+		upr.PreHook + upr.KubernetesMasterCreate: preHookKubernetesMasterCreate,
 	}
 )
 

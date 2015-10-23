@@ -14,11 +14,11 @@ const (
 	PreHook  = "pre-hook"
 	PostHook = "post-hook"
 
-	DockerSwarmCreate         = "DockerSwarmCreate"
-	DockerDaemonCreate        = "DockerDaemonCreate"
-	DockerDaemonStart         = "DockerDaemonStart"
-	DockerDaemonRestart       = "DockerDaemonRestart"
-	KubernetesMasterPodCreate = "KubernetesMasterPodCreate"
+	DockerSwarmCreate      = "DockerSwarmCreate"
+	DockerDaemonCreate     = "DockerDaemonCreate"
+	DockerDaemonStart      = "DockerDaemonStart"
+	DockerDaemonRestart    = "DockerDaemonRestart"
+	KubernetesMasterCreate = "KubernetesMasterCreate"
 )
 
 var (

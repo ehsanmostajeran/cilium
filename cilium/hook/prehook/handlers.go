@@ -24,9 +24,11 @@ const (
 )
 
 var handlers = map[string]string{
-	`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:           upr.DockerSwarmCreate,
-	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:          upr.DockerDaemonCreate,
-	`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/pods(\?.*)?`: upr.KubernetesMasterPodCreate,
+	`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:                             upr.DockerSwarmCreate,
+	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:                            upr.DockerDaemonCreate,
+	`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/pods(\?.*)?`:                   upr.KubernetesMasterCreate,
+	`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/replicationcontrollers(\?.*)?`: upr.KubernetesMasterCreate,
+	`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/service(\?.*)?`:                upr.KubernetesMasterCreate,
 }
 
 type PreHook struct {
