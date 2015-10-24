@@ -27,6 +27,14 @@ cilium/compose-example:latest \
 cilium/debug_shell:latest \
 "powerstrip-kubernetes.ditar" \
 cilium/powerstrip:kubernetes \
+"etcd.ditar" \
+gcr.io/google_containers/etcd:2.0.12 \
+"hyperkube.ditar" \
+gcr.io/google_containers/hyperkube:v1.0.3 \
+"flannel.ditar" \
+quay.io/coreos/flannel:0.5.3 \
+"gb-redisslave.ditar"
+gcr.io/google_samples/gb-redisslave:v1 \
 )
 
 echo "Pulling necessary images from DockerHub..."
