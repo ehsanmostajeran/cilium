@@ -1,0 +1,26 @@
+---
+policy-source:
+  -
+    # Policies owner
+    owner: operator
+    # Array of policies
+    policies:
+      -
+        # Policy name
+        name: "Guestbook example"
+        # Policy coverage based on docker running labels
+        coverage:
+          labels:
+            com.kubernetes.app: ^guestbook$
+        # Intent configuration
+        kubernetes-config:
+          priority: 250
+          body-obj:
+            kind: "Service"
+            spec:
+              ports:
+                -
+                  port: 3000
+                  nodePort: 30000
+                  targetPort: "http-server"
+              type: "NodePort"
