@@ -384,6 +384,7 @@ func (c EConn) GetPoliciesThatCovers(labels map[string]string) ([]up.PolicySourc
 		for _, hit := range searchResult.Hits.Hits {
 			var dbPolicy up.Policy
 			if json.Unmarshal(*hit.Source, &dbPolicy) != nil {
+				log.Error("Error while trying to unmarshal from a stored policy: '%+v' skipping this one...", err)
 				continue
 			}
 			if dbPolicy.Coverage.Covers(labels) {
@@ -407,6 +408,10 @@ func (c EConn) PutPolicy(policies up.PolicySource) error {
 	log.Debug("policies %+v\n", policies)
 	for _, policy := range policies.Policies {
 		policy.Owner = url.QueryEscape(policies.Owner)
+		// To help the user from double writing the same configurations on
+		// ObjectReference and on BodyObj, for Kubernetes policies, we
+		// automatically do that for them.
+		policy.KubernetesConfig.ConvertBodyObjTo(&policy.KubernetesConfig.ObjectReference)
 		_, err := c.Index().Index(IndexConfig).Type(TNPolicySource).Refresh(true).Id(url.QueryEscape(policy.Name)).BodyJson(policy).Do()
 		if err != nil {
 			return err

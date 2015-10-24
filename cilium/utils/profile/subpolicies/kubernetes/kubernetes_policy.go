@@ -75,7 +75,7 @@ func NewKubernetesConfig() *KubernetesConfig {
 	return &KubernetesConfig{}
 }
 
-func (kc KubernetesConfig) convertBodyObjTo(i interface{}) error {
+func (kc KubernetesConfig) ConvertBodyObjTo(i interface{}) error {
 	jsonBytes, err := json.Marshal(kc.BodyObj)
 	if err != nil {
 		return err
@@ -128,10 +128,10 @@ func (kc *KubernetesConfig) MergeWithOverwrite(other KubernetesConfig) error {
 	switch kc.ObjectReference.Kind {
 	case "Pod":
 		var orig, otherPod k8s.Pod
-		if err := kc.convertBodyObjTo(&orig); err != nil {
+		if err := kc.ConvertBodyObjTo(&orig); err != nil {
 			return err
 		}
-		if err := other.convertBodyObjTo(&otherPod); err != nil {
+		if err := other.ConvertBodyObjTo(&otherPod); err != nil {
 			return err
 		}
 		if err := mergo.MergeWithOverwrite(&orig, otherPod); err != nil {
@@ -142,10 +142,10 @@ func (kc *KubernetesConfig) MergeWithOverwrite(other KubernetesConfig) error {
 		}
 	case "ReplicationController":
 		var orig, otherRC k8s.ReplicationController
-		if err := kc.convertBodyObjTo(&orig); err != nil {
+		if err := kc.ConvertBodyObjTo(&orig); err != nil {
 			return err
 		}
-		if err := other.convertBodyObjTo(&otherRC); err != nil {
+		if err := other.ConvertBodyObjTo(&otherRC); err != nil {
 			return err
 		}
 		if err := mergo.MergeWithOverwrite(&orig, otherRC); err != nil {
@@ -156,10 +156,10 @@ func (kc *KubernetesConfig) MergeWithOverwrite(other KubernetesConfig) error {
 		}
 	case "Service":
 		var orig, otherService k8s.Service
-		if err := kc.convertBodyObjTo(&orig); err != nil {
+		if err := kc.ConvertBodyObjTo(&orig); err != nil {
 			return err
 		}
-		if err := other.convertBodyObjTo(&otherService); err != nil {
+		if err := other.ConvertBodyObjTo(&otherService); err != nil {
 			return err
 		}
 		if err := mergo.MergeWithOverwrite(&orig, otherService); err != nil {
