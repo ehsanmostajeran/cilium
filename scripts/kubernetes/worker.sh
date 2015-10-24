@@ -123,6 +123,12 @@ DOCKER_CONF=""
 
 # Start k8s components in containers
 start_k8s() {
+    if [ -f ../../../images/etcd.ditar ]; then
+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/etcd.ditar
+    fi
+    if [ -f ../../../images/flannel.ditar ]; then
+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/flannel.ditar
+    fi
     # Start flannel
     flannelCID=$(sudo docker -H unix:///var/run/docker-bootstrap.sock run -d --restart=always --net=host --privileged -v /dev/net:/dev/net quay.io/coreos/flannel:0.5.3 /opt/bin/flanneld --etcd-endpoints=http://${MASTER_IP}:4001 -iface="eth0")
 

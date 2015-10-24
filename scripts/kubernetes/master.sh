@@ -114,6 +114,12 @@ bootstrap_daemon() {
 DOCKER_CONF=""
 
 start_k8s(){
+    if [ -f ../../../images/etcd.ditar ]; then
+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/etcd.ditar
+    fi
+    if [ -f ../../../images/flannel.ditar ]; then
+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/flannel.ditar
+    fi
     # Start etcd
     docker -H unix:///var/run/docker-bootstrap.sock run --restart=always --net=host -d gcr.io/google_containers/etcd:2.0.12 /usr/local/bin/etcd --addr=127.0.0.1:4001 --bind-addr=0.0.0.0:4001 --data-dir=/var/etcd/data
 
