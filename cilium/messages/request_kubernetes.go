@@ -4,7 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/mergo"
+	uppk "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/kubernetes"
+
 	k8s "github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api"
 )
 
@@ -30,7 +31,7 @@ func (p PowerstripRequest) UnmarshalKubernetesObjRefClientBody(cc *KubernetesObj
 	return nil
 }
 
-func (kor KubernetesObjRef) convertTo(i interface{}) error {
+func (kor *KubernetesObjRef) convertTo(i interface{}) error {
 	jsonBytes, err := json.Marshal(kor.BodyObj)
 	if err != nil {
 		return err
@@ -76,8 +77,25 @@ func (kor *KubernetesObjRef) Marshal2JSONStr() (string, error) {
 	return string(bytes), nil
 }
 
-// MergeWithOverwrite merges a KubernetesObjRef (other) with self.
-func (kor *KubernetesObjRef) MergeWithOverwrite(other KubernetesObjRef) {
-	mergo.MergeWithOverwrite(&kor.ObjectReference, other.ObjectReference)
-	mergo.MergeWithOverwrite(&kor.BodyObj, other.BodyObj)
+// MergeWithOverwrite merges a KubernetesObjRef (other) with self only if they
+// are of the same Kind.
+func (kor *KubernetesObjRef) MergeWithOverwrite(other KubernetesObjRef) error {
+	if kor.Kind != other.Kind {
+		return nil
+	}
+
+	origKubConfig := uppk.KubernetesConfig{
+		ObjectReference: (uppk.ObjectReference)(kor.ObjectReference),
+		BodyObj:         (uppk.BodyObj)(kor.BodyObj),
+	}
+	otherKubConfig := uppk.KubernetesConfig{
+		ObjectReference: (uppk.ObjectReference)(other.ObjectReference),
+		BodyObj:         (uppk.BodyObj)(other.BodyObj),
+	}
+	if err := origKubConfig.MergeWithOverwrite(otherKubConfig); err != nil {
+		return err
+	}
+	kor.ObjectReference = (k8s.ObjectReference)(origKubConfig.ObjectReference)
+	kor.BodyObj = origKubConfig.BodyObj
+	return nil
 }

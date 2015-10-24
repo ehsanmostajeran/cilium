@@ -14,7 +14,7 @@ var (
 		strconv.Itoa(validPPV) + `, "ClientRequest": {"Body": "` + validKubernetesRequest + `", ` +
 		`"Request": ` + validRequestHeader + `, "Method": "` + validMethod + `"}}`
 	validKubernetesRequest = `{\"kind\":\"Pod\",\"apiVersion\":\"v1\",\"metadata\":` +
-		`{\"name\":\"redis-controller-tester\",\"namespace\":\"default\",` +
+		`{\"name\":\"redis-controller-tester\",\"namespace\":\"default\",\"creationTimestamp\":null,` +
 		`\"labels\":{\"app\":\"redis-controller\",\"com.docker.compose.service\":` +
 		`\"redis-controller\"}},\"spec\":{\"containers\":[{\"name\":\"redis\",\"image\":` +
 		`\"redis\",\"ports\":[{\"containerPort\":6379,\"protocol\":\"TCP\"}],\"resources\":` +
@@ -32,19 +32,20 @@ var (
 		"apiVersion":      "v1",
 		"resourceVersion": "thisdoesntexistonejsonrequest",
 		"metadata": map[string]interface{}{
-			"name":      "redis-controller-tester",
-			"namespace": "default",
-			"labels": map[string]string{
+			"name":              "redis-controller-tester",
+			"namespace":         "default",
+			"creationTimestamp": nil,
+			"labels": map[string]interface{}{
 				"app": "redis-controller",
 				"com.docker.compose.service": "redis-controller",
 			},
 		},
 		"spec": map[string]interface{}{
-			"containers": []map[string]interface{}{
+			"containers": []interface{}{
 				map[string]interface{}{
 					"name":  "redis",
 					"image": "redis",
-					"ports": []map[string]interface{}{
+					"ports": []interface{}{
 						map[string]interface{}{
 							"containerPort": float64(6379),
 							"protocol":      "TCP",
@@ -55,8 +56,12 @@ var (
 					"imagePullPolicy":        "IfNotPresent",
 				},
 			},
-			"restartPolicy": "Always",
-			"dnsPolicy":     "ClusterFirst",
+			// When the kubernetes PR is accepted we can remove the following
+			// 2 lines.
+			"volumes":            nil,
+			"serviceAccountName": "",
+			"restartPolicy":      "Always",
+			"dnsPolicy":          "ClusterFirst",
 		},
 		"status": map[string]interface{}{},
 	}
@@ -69,7 +74,9 @@ func TestKubernetesUnmarshalKubernetesObjRefClientBody(t *testing.T) {
 		},
 	}
 	var kor KubernetesObjRef
-	pr.UnmarshalKubernetesObjRefClientBody(&kor)
+	if err := pr.UnmarshalKubernetesObjRefClientBody(&kor); err != nil {
+		t.Fatal("invalid validKubernetesRequestWoutEscQuot:", err)
+	}
 	kor.ResourceVersion = "thisdoesntexistonejsonrequest"
 	kor.BodyObj["resourceVersion"] = "thisdoesntexistonejsonrequest"
 	korWant := KubernetesObjRef{
@@ -106,15 +113,13 @@ func TestKubernetesMarshal2JSONStr(t *testing.T) {
 		t.Fatal("invalid request message:", err)
 	}
 	var kor KubernetesObjRef
-	err = powerStripReq.UnmarshalKubernetesObjRefClientBody(&kor)
-	if err != nil {
-		t.Fatal("invalid request:", err)
+	if err := powerStripReq.UnmarshalKubernetesObjRefClientBody(&kor); err != nil {
+		t.Fatal("invalid validKubernetesRequestWoutEscQuot:", err)
 	}
 	_, err = kor.Marshal2JSONStr()
 	if err != nil {
 		t.Fatal("invalid KubernetesObjRef:", err)
 	}
-	//Can't compare strings because the maps won't be the same
 }
 
 func TestMergeWithOverwriteKubernetes(t *testing.T) {
@@ -124,7 +129,9 @@ func TestMergeWithOverwriteKubernetes(t *testing.T) {
 		},
 	}
 	var kor KubernetesObjRef
-	pr.UnmarshalKubernetesObjRefClientBody(&kor)
+	if err := pr.UnmarshalKubernetesObjRefClientBody(&kor); err != nil {
+		t.Fatal("invalid validKubernetesRequestWoutEscQuot:", err)
+	}
 	korWant := KubernetesObjRef{
 		ObjectReference: validKubernetesObjReference,
 		BodyObj:         validKubernetesBodyObj,

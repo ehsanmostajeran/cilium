@@ -63,8 +63,7 @@ func (kr KubernetesRunnable) DockerExec(hookType, reqType string, db ucdb.Db, cc
 
 func (kr KubernetesRunnable) KubernetesExec(hookType, reqType string, db ucdb.Db, cc *m.KubernetesObjRef) error {
 	log.Debug("")
-	cc.MergeWithOverwrite(m.KubernetesObjRef{
+	return cc.MergeWithOverwrite(m.KubernetesObjRef{
 		ObjectReference: (k8s.ObjectReference)(kr.kubernetescfg.ObjectReference),
 		BodyObj:         (map[string]interface{})(kr.kubernetescfg.BodyObj)})
-	return nil
 }

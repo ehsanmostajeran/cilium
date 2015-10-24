@@ -2,11 +2,15 @@ package kubernetes_policy
 
 import (
 	"encoding/json"
+	"errors"
 	"sort"
 
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/mergo"
 	k8s "github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api"
 )
+
+var log = logging.MustGetLogger("cilium")
 
 type KubernetesConfig struct {
 	ObjectReference ObjectReference `json:"object-reference,omitempty" yaml:"object-reference,omitempty"`
@@ -71,20 +75,119 @@ func NewKubernetesConfig() *KubernetesConfig {
 	return &KubernetesConfig{}
 }
 
+func (kc KubernetesConfig) convertBodyObjTo(i interface{}) error {
+	jsonBytes, err := json.Marshal(kc.BodyObj)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(jsonBytes, i); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (kc KubernetesConfig) convertObjRefTo(i interface{}) error {
+	jsonBytes, err := json.Marshal(kc.ObjectReference)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(jsonBytes, i); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (kc *KubernetesConfig) mapToBodyObj(i interface{}) error {
+	jsonBytes, err := json.Marshal(i)
+	if err != nil {
+		return err
+	}
+	if err := json.Unmarshal(jsonBytes, &kc.BodyObj); err != nil {
+		return err
+	}
+	return nil
+}
+
 // MergeWithOverwrite merges receiver's values with the `other`
-// KubernetesConfig's values. `other` overwrites the receiver's values if the
-// other's values are different than default's.
+// KubernetesConfig's values if self's and `other`'s ObjectReference.Kind are
+// the same. `other` overwrites the receiver's values if the other's values are
+// different than default's.
 // Special cases:
 // Priority - `other` will overwrite receiver's Priorty no matter the value.
 func (kc *KubernetesConfig) MergeWithOverwrite(other KubernetesConfig) error {
-	if err := mergo.MergeWithOverwrite(kc, other); err != nil {
+	if kc.ObjectReference.Kind != kc.ObjectReference.Kind {
+		return nil
+	}
+
+	if err := mergo.MergeWithOverwrite(&kc.ObjectReference, other.ObjectReference); err != nil {
 		return err
 	}
+
+	// We won't merge the map, we convert it to the specific object and then
+	// merge it.
+	switch kc.ObjectReference.Kind {
+	case "Pod":
+		var orig, otherPod k8s.Pod
+		if err := kc.convertBodyObjTo(&orig); err != nil {
+			return err
+		}
+		if err := other.convertBodyObjTo(&otherPod); err != nil {
+			return err
+		}
+		if err := mergo.MergeWithOverwrite(&orig, otherPod); err != nil {
+			return err
+		}
+		if err := kc.mapToBodyObj(orig); err != nil {
+			return err
+		}
+	case "ReplicationController":
+		var orig, otherRC k8s.ReplicationController
+		if err := kc.convertBodyObjTo(&orig); err != nil {
+			return err
+		}
+		if err := other.convertBodyObjTo(&otherRC); err != nil {
+			return err
+		}
+		if err := mergo.MergeWithOverwrite(&orig, otherRC); err != nil {
+			return err
+		}
+		if err := kc.mapToBodyObj(orig); err != nil {
+			return err
+		}
+	case "Service":
+		var orig, otherService k8s.Service
+		if err := kc.convertBodyObjTo(&orig); err != nil {
+			return err
+		}
+		if err := other.convertBodyObjTo(&otherService); err != nil {
+			return err
+		}
+		if err := mergo.MergeWithOverwrite(&orig, otherService); err != nil {
+			return err
+		}
+		if err := kc.mapToBodyObj(orig); err != nil {
+			return err
+		}
+	default:
+		return errors.New("unsupported kind")
+	}
+
+	// We have to make sure that we return the BodyObj with the values from
+	// ObjectReference
+	var objRefMap map[string]interface{}
+	if err := kc.convertObjRefTo(&objRefMap); err != nil {
+		return err
+	}
+	if err := mergo.MapWithOverwrite(&kc.BodyObj, objRefMap); err != nil {
+		return err
+	}
+
 	kc.Priority = other.Priority
 	return nil
 }
 
-// OverwriteWith overwrites values with the ones from `other` KubernetesConfig.
+// OverwriteWith overwrites values with the ones from `other` KubernetesConfig
+// if those ones aren't nil and if they have an `omitempty` tag.
 func (kc *KubernetesConfig) OverwriteWith(other KubernetesConfig) error {
 	if err := kc.ObjectReference.OverwriteWith(other.ObjectReference); err != nil {
 		return err
