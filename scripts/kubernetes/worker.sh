@@ -19,6 +19,8 @@
 
 set -e
 
+dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
 # See if there's a different DOCKER_ENDPOINT set
 if [ -z ${DOCKER_ENDPOINT} ]; then
     DOCKER_ENDPOINT="unix:///var/run/docker.sock"
@@ -123,10 +125,10 @@ DOCKER_CONF=""
 
 # Start k8s components in containers
 start_k8s() {
-    if [ -f ../../../images/etcd.ditar ]; then
+    if [ -f $dir/../../../images/etcd.ditar ]; then
         sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/etcd.ditar
     fi
-    if [ -f ../../../images/flannel.ditar ]; then
+    if [ -f $dir/../../../images/flannel.ditar ]; then
         sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/flannel.ditar
     fi
     # Start flannel
@@ -171,11 +173,12 @@ start_k8s() {
     sleep 5
 
     # Start cilium
-    ../../../entrypoint.sh infect
+    $dir/../../../entrypoint.sh infect
 
     # Start kubelet & proxy in container
     docker run \
         --net=host \
+        --pid=host \
         --privileged \
         --restart=always \
         -d \
@@ -187,10 +190,10 @@ start_k8s() {
         gcr.io/google_containers/hyperkube:v${K8S_VERSION} \
         /hyperkube kubelet --api-servers=http://${MASTER_IP}:8080 \
         --v=2 --address=0.0.0.0 --enable-server \
-        --hostname-override="${IP}" \
+        --hostname-override=${IP} \
         --cluster-dns=10.0.0.10 \
         --cluster-domain=cluster.local \
-	--docker-endpoint="${DOCKER_ENDPOINT}"
+	--docker-endpoint=${DOCKER_ENDPOINT}
 
     docker run \
         -d \

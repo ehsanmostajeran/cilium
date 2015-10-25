@@ -1,9 +1,11 @@
---- master.sh.orig	2015-10-20 03:18:54.211476124 +0100
-+++ master.sh	2015-10-20 03:17:31.979108287 +0100
-@@ -19,6 +19,22 @@
+--- master.sh.orig	2015-10-25 19:44:01.190688359 +0000
++++ master.sh	2015-10-25 19:43:21.312426609 +0000
+@@ -19,6 +19,24 @@
  
  set -e
  
++dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
++
 +# See if there's a different DOCKER_ENDPOINT set
 +if [ -z ${DOCKER_ENDPOINT} ]; then
 +    DOCKER_ENDPOINT="unix:///var/run/docker.sock"
@@ -23,7 +25,7 @@
  # Make sure docker daemon is running
  if ( ! ps -ef | grep "/usr/bin/docker" | grep -v 'grep' &> /dev/null ); then
      echo "Docker is not running on this machine!"
-@@ -53,7 +69,7 @@
+@@ -53,7 +71,7 @@
          *64)
              ;;
           *)
@@ -32,7 +34,7 @@
              exit 1
              ;;
      esac
-@@ -90,7 +106,7 @@
+@@ -90,7 +108,7 @@
  # Start the bootstrap daemon
  bootstrap_daemon() {
      sudo -b docker -d -H unix:///var/run/docker-bootstrap.sock -p /var/run/docker-bootstrap.pid --iptables=false --ip-masq=false --bridge=none --graph=/var/lib/docker-bootstrap 2> /var/log/docker-bootstrap.log 1> /dev/null
@@ -41,37 +43,43 @@
      sleep 5
  }
  
-@@ -98,7 +114,7 @@
+@@ -98,7 +116,13 @@
  DOCKER_CONF=""
  
  start_k8s(){
 -    # Start etcd 
++    if [ -f $dir/../../../images/etcd.ditar ]; then
++        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/etcd.ditar
++    fi
++    if [ -f $dir/../../../images/flannel.ditar ]; then
++        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/flannel.ditar
++    fi
 +    # Start etcd
      docker -H unix:///var/run/docker-bootstrap.sock run --restart=always --net=host -d gcr.io/google_containers/etcd:2.0.12 /usr/local/bin/etcd --addr=127.0.0.1:4001 --bind-addr=0.0.0.0:4001 --data-dir=/var/etcd/data
  
      sleep 5
-@@ -146,6 +162,9 @@
+@@ -146,6 +170,9 @@
      # sleep a little bit
      sleep 5
  
 +    # Start cilium
-+    ../../../entrypoint.sh infect
++    $dir/../../../entrypoint.sh infect
 +
      # Start kubelet & proxy, then start master components as pods
      docker run \
          --net=host \
-@@ -162,17 +181,18 @@
+@@ -163,17 +190,18 @@
          /hyperkube kubelet \
          --api-servers=http://localhost:8080 \
          --v=2 --address=0.0.0.0 --enable-server \
 -        --hostname-override=127.0.0.1 \
-+        --hostname-override="${IP}" \
++        --hostname-override=${IP} \
          --config=/etc/kubernetes/manifests-multi \
          --cluster-dns=10.0.0.10 \
 -        --cluster-domain=cluster.local
 -    
 +        --cluster-domain=cluster.local \
-+	--docker-endpoint="${DOCKER_ENDPOINT}"
++	--docker-endpoint=${DOCKER_ENDPOINT}
 +
      docker run \
          -d \
