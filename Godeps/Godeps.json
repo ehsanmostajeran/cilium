@@ -25,8 +25,8 @@
 		},
 		{
 			"ImportPath": "github.com/cilium-team/mergo",
-			"Comment": "0.2.0-4-g87cdd01",
-			"Rev": "87cdd01a5b33125b07801cd10716765a050c9a70"
+			"Comment": "0.2.0-8-g2f6d38f",
+			"Rev": "2f6d38f329a3827b89643e20eab9e872e5d13135"
 		},
 		{
 			"ImportPath": "github.com/cilium-team/yaml",
@@ -68,7 +68,7 @@
 		},
 		{
 			"ImportPath": "github.com/fsouza/go-dockerclient",
-			"Rev": "412c004d923b7b89701e7a1632de83f843657a03"
+			"Rev": "64c100a0b566fb3569431b9416eb5a794a322981"
 		},
 		{
 			"ImportPath": "github.com/ghodss/yaml",
@@ -80,7 +80,7 @@
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
-			"Rev": "deb4a5e3b15dea23f340a311eea995421845c356"
+			"Rev": "5baca1b63153b1a82014546382edbdd302b138b6"
 		},
 		{
 			"ImportPath": "github.com/google/gofuzz",
@@ -118,11 +118,11 @@
 		},
 		{
 			"ImportPath": "github.com/prometheus/procfs",
-			"Rev": "454a56f35412459b5e684fd5ec0f9211b94f002a"
+			"Rev": "3b242c2717e95d36e9693ce6f00d4537b35b2ba6"
 		},
 		{
 			"ImportPath": "github.com/samalba/dockerclient",
-			"Rev": "ffec08181228917acac8dde69ce8a922f23a57ff"
+			"Rev": "a3241e22d7230854778614ebca9c7f869776c5f0"
 		},
 		{
 			"ImportPath": "github.com/spf13/pflag",
@@ -138,12 +138,16 @@
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "cd8c2701a5e10f044db915e65eac68f738399d22"
+			"Rev": "2cba614e8ff920c60240d2677bc019af32ee04e5"
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v2",
 			"Comment": "v2.0.14",
 			"Rev": "1de06a68b064a4185f388a50a5f4371d855c2229"
+		},
+		{
+			"ImportPath": "gopkg.in/yaml.v2",
+			"Rev": "53feefa2559fb8dfa8d81baad31be332c97d6c77"
 		},
 		{
 			"ImportPath": "k8s.io/kubernetes/pkg/api",

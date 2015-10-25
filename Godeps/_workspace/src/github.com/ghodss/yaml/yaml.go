@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/yaml"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/gopkg.in/yaml.v2"
 )
 
 // Marshals the object into JSON then converts JSON to YAML and returns the

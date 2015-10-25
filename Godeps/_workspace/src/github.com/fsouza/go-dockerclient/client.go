@@ -32,6 +32,7 @@ import (
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient/external/github.com/docker/docker/opts"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/homedir"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient/external/github.com/docker/docker/pkg/stdcopy"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient/external/github.com/hashicorp/go-cleanhttp"
 )
 
 const userAgent = "go-dockerclient"
@@ -191,7 +192,7 @@ func NewVersionedClient(endpoint string, apiVersionString string) (*Client, erro
 		}
 	}
 	return &Client{
-		HTTPClient:          &http.Client{},
+		HTTPClient:          cleanhttp.DefaultClient(),
 		Dialer:              &net.Dialer{},
 		endpoint:            endpoint,
 		endpointURL:         u,
@@ -294,9 +295,8 @@ func NewVersionedTLSClientFromBytes(endpoint string, certPEMBlock, keyPEMBlock, 
 		}
 		tlsConfig.RootCAs = caPool
 	}
-	tr := &http.Transport{
-		TLSClientConfig: tlsConfig,
-	}
+	tr := cleanhttp.DefaultTransport()
+	tr.TLSClientConfig = tlsConfig
 	if err != nil {
 		return nil, err
 	}
@@ -615,9 +615,9 @@ func (c *Client) hijack(method, path string, hijackOptions hijackOptions) error 
 		defer func() {
 			if hijackOptions.in != nil {
 				if closer, ok := hijackOptions.in.(io.Closer); ok {
-					errChanIn <- nil
 					closer.Close()
 				}
+				errChanIn <- nil
 			}
 		}()
 		var err error
