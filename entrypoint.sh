@@ -4,12 +4,12 @@ set -e
 address="https://raw.githubusercontent.com/cilium-team/cilium/master"
 
 dependencies=( \
-"docker" \
-"docker --version" \
-"1.8.0" \
-"Open vSwitch" \
-"ovs-ofctl --version" \
-"2.3.2" \
+    "docker" \
+    "docker --version" \
+    "1.8.0" \
+    "Open vSwitch" \
+    "ovs-ofctl --version" \
+    "2.3.2" \
 )
 
 show_help(){
@@ -28,6 +28,13 @@ show_help(){
     echo "            already infected nodes. On the first node it"
     echo "            automatically starts 3rd party services for the cilium"
     echo "            cluster such as the loadbalancer and the DNS"
+    echo "  infect-kubernetes"
+    echo "            infects this host with cilium's components The IP"
+    echo "            environment variable should be set to the reachable"
+    echo "            node's IP. If set, the NET_IP environment variable should"
+    echo "            be set to the network's address of the reachable node's"
+    echo "            IP. If set, the MASTER_IP should point to master of the"
+    echo "            kubernetes cluster."
     echo "  start-kibana"
     echo "            starts kibana container with dashboard The IP environment"
     echo "            variable should be set to the reachable node's IP"
@@ -52,15 +59,15 @@ check_requirements(){
         echo "${dependencies["$((i))"]}: $res"
         if [ "$res" != "OK!" ]
         then
-           echo "ERROR: Please install the right version of "${dependencies["$((i))"]}""
-           eval "$1=1"
-           return
+            echo "ERROR: Please install the right version of "${dependencies["$((i))"]}""
+            eval "$1=1"
+            return
         fi
     done
     docker_IP=$(ip -f inet -o addr show docker0|cut -d\  -f 7 | cut -d/ -f 1)
     if [[ -z $docker_IP ]]; then
-	echo "ERROR: Unable to find docker0 IP address."
-	echo "Are you sure you have docker daemon running?"
+        echo "ERROR: Unable to find docker0 IP address."
+        echo "Are you sure you have docker daemon running?"
     fi
 
     echo "SUCCESS: All dependencies are available with the right version!"
@@ -68,29 +75,29 @@ check_requirements(){
 }
 
 prepare(){
-docker_images=(\
-"cilium-powerstrip-latest.ditar" \
-cilium/powerstrip:latest \
-"swarm-0.4.0.ditar" \
-swarm:0.4.0 \
-"elasticsearch-1.7.1.ditar" \
-elasticsearch:1.7.1 \
-"haproxy-rest.ditar" \
-tnolet/haproxy-rest:latest \
-"consul.ditar" \
-progrium/consul:latest \
-"cilium-dns.ditar" \
-cilium/docker-dns-rest:1.0-rr-with-del \
-"docker-collector.ditar" \
-cilium/docker-collector:latest \
-"cilium.ditar" \
-cilium/cilium:latest \
-)
+    docker_images=(\
+        "cilium-powerstrip-latest.ditar" \
+        cilium/powerstrip:latest \
+        "swarm-0.4.0.ditar" \
+        swarm:0.4.0 \
+        "elasticsearch-1.7.1.ditar" \
+        elasticsearch:1.7.1 \
+        "haproxy-rest.ditar" \
+        tnolet/haproxy-rest:latest \
+        "consul.ditar" \
+        progrium/consul:latest \
+        "cilium-dns.ditar" \
+        cilium/docker-dns-rest:1.0-rr-with-del \
+        "docker-collector.ditar" \
+        cilium/docker-collector:latest \
+        "cilium.ditar" \
+        cilium/cilium:latest \
+    )
 
-echo "Pulling necessary images from DockerHub..."
-for ((i=0; i<"${#docker_images[@]}"; i+=2)); do
-	docker pull "${docker_images["$((i+1))"]}"
-done
+    echo "Pulling necessary images from DockerHub..."
+    for ((i=0; i<"${#docker_images[@]}"; i+=2)); do
+        docker pull "${docker_images["$((i+1))"]}"
+    done
 }
 
 infect(){
@@ -118,6 +125,35 @@ infect(){
     curl -Ssl -o "$external_deps_temp/docker-collector-configs/configs.json" "$address/external-deps/docker-collector-configs/configs.json"
     echo "Downloads completed..."
     $scripts_tmp/infect-node.sh
+}
+
+infect_kubernetes(){
+    echo "Infecting node with cilium..."
+    echo "MASTER_IP=$MASTER_IP"
+    echo "IP=$IP"
+    echo "Downloading scripts..."
+    export KUBERNETES=true
+    export DOCKER_ENDPOINT="tcp://$IP:2375"
+    tmp_dir="$(mktemp -d)"
+    tmp_dir_cilium="$tmp_dir/cilium"
+    scripts_tmp="$tmp_dir_cilium/scripts"
+    scripts_k8s_tmp="$tmp_dir_cilium/scripts/kubernetes"
+    mkdir -p "$tmp_dir_cilium"
+    mkdir -p "$scripts_tmp"
+    mkdir -p "$scripts_k8s_tmp"
+    curl -Ssl -o "$tmp_dir/entrypoint.sh" "$address/entrypoint.sh"
+    chmod +x "$tmp_dir/entrypoint.sh"
+    if [[ -z $MASTER_IP ]]; then
+        curl -Ssl -o "$scripts_k8s_tmp/master.sh" "$address/scripts/kubernetes/master.sh"
+        chmod +x "$scripts_k8s_tmp/master.sh"
+        echo "Downloads completed..."
+        $scripts_k8s_tmp/master.sh
+    else
+        curl -Ssl -o "$scripts_k8s_tmp/worker.sh" "$address/scripts/kubernetes/worker.sh"
+        chmod +x "$scripts_k8s_tmp/worker.sh"
+        echo "Downloads completed..."
+        $scripts_k8s_tmp/worker.sh
+    fi
 }
 
 start_services(){
@@ -153,76 +189,102 @@ store_policy(){
     docker_IP=$(ip -f inet -o addr show docker0|cut -d\  -f 7 | cut -d/ -f 1)
     sed -i "s/172.17.42.1/$docker_IP/g" "$policies_tmp/1-cluster.yml"
     docker run --rm \
-    -e ELASTIC_IP=$IP \
-    -v "$policies_tmp":/opt/cilium/policies/ \
-    cilium/cilium -f /opt/cilium/policies
+        -e ELASTIC_IP=$IP \
+        -v "$policies_tmp":/opt/cilium/policies/ \
+        cilium/cilium -f /opt/cilium/policies
 }
 
 start_kibana(){
     echo "Starting Kibana..."
     docker run \
-    --name cilium-kibana \
-    -e ELASTICSEARCH_URL=http://$IP:9200 \
-    -p 5601:5601 \
-    -d kibana:4.1.1
+        --name cilium-kibana \
+        -e ELASTICSEARCH_URL=http://$IP:9200 \
+        -p 5601:5601 \
+        -d kibana:4.1.1
 }
 
 entry(){
-case $1 in
-    check)
-        check_requirements ret
-        if [[ "$ret" == 0 ]]; then
-            exit 0
-        else
-            exit 1
-        fi
-    ;;
-    prepare)
-        prepare
-        exit 0
-    ;;
-    infect)
-        if [[ -z $NET_IP ]] && [[ -z $MASTER_IP ]]; then
-            echo "ERROR: NET_IP or MASTER_IP is empty"
-            show_help
-            exit 0
-        fi
-        if [[ -z $IP ]]; then
-            echo "ERROR: IP is empty"
-            show_help
-            exit 0
-        fi
-        check_requirements ret
-		if [[ "$ret" == 0 ]]; then
-	        infect
-            if [[ -n $NET_IP ]]; then
-                store_policy
-                start_services
-                echo "First node infected!"
+    case $1 in
+        check)
+            check_requirements ret
+            if [[ "$ret" == 0 ]]; then
+                exit 0
             else
-                echo "Node infected!"
+                exit 1
             fi
+            ;;
+        prepare)
+            prepare
             exit 0
-        else
-            exit 1
-        fi
-        show_help
-        exit 0
-    ;;
-    start-kibana)
-        if [[ -z $IP ]]; then
-            echo "ERROR: IP is empty"
+            ;;
+        infect)
+            if [[ -z $NET_IP ]] && [[ -z $MASTER_IP ]]; then
+                echo "ERROR: NET_IP or MASTER_IP is empty"
+                show_help
+                exit 0
+            fi
+            if [[ -z $IP ]]; then
+                echo "ERROR: IP is empty"
+                show_help
+                exit 0
+            fi
+            check_requirements ret
+            if [[ "$ret" == 0 ]]; then
+                infect
+                if [[ -n $NET_IP ]]; then
+                    store_policy
+                    start_services
+                    echo "First node infected!"
+                else
+                    echo "Node infected!"
+                fi
+                exit 0
+            else
+                exit 1
+            fi
             show_help
             exit 0
-        fi
-        start_kibana
-        exit 0
-    ;;
-    *)
-        show_help
-        exit -1
-    ;;
-esac
+            ;;
+        infect-kubernetes)
+            if [[ -z $NET_IP ]] && [[ -z $MASTER_IP ]]; then
+                echo "ERROR: NET_IP or MASTER_IP is empty"
+                show_help
+                exit 0
+            fi
+            if [[ -z $IP ]]; then
+                echo "ERROR: IP is empty"
+                show_help
+                exit 0
+            fi
+            check_requirements ret
+            if [[ "$ret" == 0 ]]; then
+                infect_kubernetes
+                if [[ -n $NET_IP ]]; then
+                    echo "Master node infected!"
+                else
+                    echo "Worker node infected!"
+                fi
+                exit 0
+            else
+                exit 1
+            fi
+            show_help
+            exit 0
+            ;;
+        start-kibana)
+            if [[ -z $IP ]]; then
+                echo "ERROR: IP is empty"
+                show_help
+                exit 0
+            fi
+            start_kibana
+            exit 0
+            ;;
+        *)
+            show_help
+            exit -1
+            ;;
+    esac
 }
 
 entry "$@"
