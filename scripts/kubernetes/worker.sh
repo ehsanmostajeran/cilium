@@ -21,6 +21,14 @@ set -e
 
 dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+# See if there's a different CILIUM_ROOT path set
+if [ -z ${CILIUM_ROOT} ]; then
+    CILIUM_ROOT=$( cd "$( dirname "${dir}/../../../../" )" && pwd )
+    echo "CILIUM_ROOT not set, using default: ${CILIUM_ROOT}"
+else
+    echo "CILIUM_ROOT is set to: ${CILIUM_ROOT}"
+fi
+
 # See if there's a different DOCKER_ENDPOINT set
 if [ -z ${DOCKER_ENDPOINT} ]; then
     DOCKER_ENDPOINT="unix:///var/run/docker.sock"
@@ -125,11 +133,11 @@ DOCKER_CONF=""
 
 # Start k8s components in containers
 start_k8s() {
-    if [ -f $dir/../../../images/etcd.ditar ]; then
-        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/etcd.ditar
+    if [ -f ${CILIUM_ROOT}/images/etcd.ditar ]; then
+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ${CILIUM_ROOT}/images/etcd.ditar
     fi
-    if [ -f $dir/../../../images/flannel.ditar ]; then
-        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/flannel.ditar
+    if [ -f ${CILIUM_ROOT}/images/flannel.ditar ]; then
+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ${CILIUM_ROOT}/images/flannel.ditar
     fi
     # Start flannel
     flannelCID=$(sudo docker -H unix:///var/run/docker-bootstrap.sock run -d --restart=always --net=host --privileged -v /dev/net:/dev/net quay.io/coreos/flannel:0.5.3 /opt/bin/flanneld --etcd-endpoints=http://${MASTER_IP}:4001 -iface="eth0")

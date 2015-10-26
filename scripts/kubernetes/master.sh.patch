@@ -1,10 +1,18 @@
---- master.sh.orig	2015-10-25 19:44:01.190688359 +0000
-+++ master.sh	2015-10-25 19:43:21.312426609 +0000
-@@ -19,6 +19,24 @@
+--- master.sh.orig	2015-10-26 18:33:53.762588999 +0000
++++ master.sh	2015-10-26 18:33:33.563552712 +0000
+@@ -19,6 +19,32 @@
  
  set -e
  
 +dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
++
++# See if there's a different CILIUM_ROOT path set
++if [ -z ${CILIUM_ROOT} ]; then
++    CILIUM_ROOT=$( cd "$( dirname "${dir}/../../../../" )" && pwd )
++    echo "CILIUM_ROOT not set, using default: ${CILIUM_ROOT}"
++else
++    echo "CILIUM_ROOT is set to: ${CILIUM_ROOT}"
++fi
 +
 +# See if there's a different DOCKER_ENDPOINT set
 +if [ -z ${DOCKER_ENDPOINT} ]; then
@@ -25,7 +33,7 @@
  # Make sure docker daemon is running
  if ( ! ps -ef | grep "/usr/bin/docker" | grep -v 'grep' &> /dev/null ); then
      echo "Docker is not running on this machine!"
-@@ -53,7 +71,7 @@
+@@ -53,7 +79,7 @@
          *64)
              ;;
           *)
@@ -34,7 +42,7 @@
              exit 1
              ;;
      esac
-@@ -90,7 +108,7 @@
+@@ -90,7 +116,7 @@
  # Start the bootstrap daemon
  bootstrap_daemon() {
      sudo -b docker -d -H unix:///var/run/docker-bootstrap.sock -p /var/run/docker-bootstrap.pid --iptables=false --ip-masq=false --bridge=none --graph=/var/lib/docker-bootstrap 2> /var/log/docker-bootstrap.log 1> /dev/null
@@ -43,32 +51,32 @@
      sleep 5
  }
  
-@@ -98,7 +116,13 @@
+@@ -98,7 +124,13 @@
  DOCKER_CONF=""
  
  start_k8s(){
 -    # Start etcd 
-+    if [ -f $dir/../../../images/etcd.ditar ]; then
-+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/etcd.ditar
++    if [ -f ${CILIUM_ROOT}/images/etcd.ditar ]; then
++        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ${CILIUM_ROOT}/images/etcd.ditar
 +    fi
-+    if [ -f $dir/../../../images/flannel.ditar ]; then
-+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/flannel.ditar
++    if [ -f ${CILIUM_ROOT}/images/flannel.ditar ]; then
++        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ${CILIUM_ROOT}/images/flannel.ditar
 +    fi
 +    # Start etcd
      docker -H unix:///var/run/docker-bootstrap.sock run --restart=always --net=host -d gcr.io/google_containers/etcd:2.0.12 /usr/local/bin/etcd --addr=127.0.0.1:4001 --bind-addr=0.0.0.0:4001 --data-dir=/var/etcd/data
  
      sleep 5
-@@ -146,6 +170,9 @@
+@@ -146,6 +178,9 @@
      # sleep a little bit
      sleep 5
  
 +    # Start cilium
-+    $dir/../../../entrypoint.sh infect
++    ${CILIUM_ROOT}/entrypoint.sh infect
 +
      # Start kubelet & proxy, then start master components as pods
      docker run \
          --net=host \
-@@ -163,17 +190,18 @@
+@@ -163,17 +198,18 @@
          /hyperkube kubelet \
          --api-servers=http://localhost:8080 \
          --v=2 --address=0.0.0.0 --enable-server \

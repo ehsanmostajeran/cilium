@@ -21,6 +21,14 @@ set -e
 
 dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
+# See if there's a different CILIUM_ROOT path set
+if [ -z ${CILIUM_ROOT} ]; then
+    CILIUM_ROOT=$( cd "$( dirname "${dir}/../../../../" )" && pwd )
+    echo "CILIUM_ROOT not set, using default: ${CILIUM_ROOT}"
+else
+    echo "CILIUM_ROOT is set to: ${CILIUM_ROOT}"
+fi
+
 # See if there's a different DOCKER_ENDPOINT set
 if [ -z ${DOCKER_ENDPOINT} ]; then
     DOCKER_ENDPOINT="unix:///var/run/docker.sock"
@@ -116,11 +124,11 @@ bootstrap_daemon() {
 DOCKER_CONF=""
 
 start_k8s(){
-    if [ -f $dir/../../../images/etcd.ditar ]; then
-        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/etcd.ditar
+    if [ -f ${CILIUM_ROOT}/images/etcd.ditar ]; then
+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ${CILIUM_ROOT}/images/etcd.ditar
     fi
-    if [ -f $dir/../../../images/flannel.ditar ]; then
-        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/flannel.ditar
+    if [ -f ${CILIUM_ROOT}/images/flannel.ditar ]; then
+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ${CILIUM_ROOT}/images/flannel.ditar
     fi
     # Start etcd
     docker -H unix:///var/run/docker-bootstrap.sock run --restart=always --net=host -d gcr.io/google_containers/etcd:2.0.12 /usr/local/bin/etcd --addr=127.0.0.1:4001 --bind-addr=0.0.0.0:4001 --data-dir=/var/etcd/data
@@ -171,7 +179,7 @@ start_k8s(){
     sleep 5
 
     # Start cilium
-    $dir/../../../entrypoint.sh infect
+    ${CILIUM_ROOT}/entrypoint.sh infect
 
     # Start kubelet & proxy, then start master components as pods
     docker run \

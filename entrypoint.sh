@@ -143,6 +143,7 @@ infect_kubernetes(){
     mkdir -p "$scripts_k8s_tmp"
     curl -Ssl -o "$tmp_dir/entrypoint.sh" "$address/entrypoint.sh"
     chmod +x "$tmp_dir/entrypoint.sh"
+    CILIUM_ROOT=$tmp_dir
     if [[ -z $MASTER_IP ]]; then
         curl -Ssl -o "$scripts_k8s_tmp/master.sh" "$address/scripts/kubernetes/master.sh"
         chmod +x "$scripts_k8s_tmp/master.sh"

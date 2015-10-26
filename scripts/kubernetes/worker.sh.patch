@@ -1,10 +1,18 @@
---- worker.sh.orig	2015-10-25 19:44:01.704665955 +0000
-+++ worker.sh	2015-10-25 19:43:21.315426479 +0000
-@@ -19,6 +19,24 @@
+--- worker.sh.orig	2015-10-26 18:33:54.185568818 +0000
++++ worker.sh	2015-10-26 18:33:44.002054682 +0000
+@@ -19,6 +19,32 @@
  
  set -e
  
 +dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
++
++# See if there's a different CILIUM_ROOT path set
++if [ -z ${CILIUM_ROOT} ]; then
++    CILIUM_ROOT=$( cd "$( dirname "${dir}/../../../../" )" && pwd )
++    echo "CILIUM_ROOT not set, using default: ${CILIUM_ROOT}"
++else
++    echo "CILIUM_ROOT is set to: ${CILIUM_ROOT}"
++fi
 +
 +# See if there's a different DOCKER_ENDPOINT set
 +if [ -z ${DOCKER_ENDPOINT} ]; then
@@ -25,7 +33,7 @@
  # Make sure docker daemon is running
  if ( ! ps -ef | grep "/usr/bin/docker" | grep -v 'grep' &> /dev/null  ); then
      echo "Docker is not running on this machine!"
-@@ -62,7 +80,7 @@
+@@ -62,7 +88,7 @@
          *64)
              ;;
          *)
@@ -34,20 +42,20 @@
  	        exit 1
  	        ;;
      esac
-@@ -107,6 +125,12 @@
+@@ -107,6 +133,12 @@
  
  # Start k8s components in containers
  start_k8s() {
-+    if [ -f $dir/../../../images/etcd.ditar ]; then
-+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/etcd.ditar
++    if [ -f ${CILIUM_ROOT}/images/etcd.ditar ]; then
++        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ${CILIUM_ROOT}/images/etcd.ditar
 +    fi
-+    if [ -f $dir/../../../images/flannel.ditar ]; then
-+        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ../../../images/flannel.ditar
++    if [ -f ${CILIUM_ROOT}/images/flannel.ditar ]; then
++        sudo docker -H unix:///var/run/docker-bootstrap.sock load -i ${CILIUM_ROOT}/images/flannel.ditar
 +    fi
      # Start flannel
      flannelCID=$(sudo docker -H unix:///var/run/docker-bootstrap.sock run -d --restart=always --net=host --privileged -v /dev/net:/dev/net quay.io/coreos/flannel:0.5.3 /opt/bin/flanneld --etcd-endpoints=http://${MASTER_IP}:4001 -iface="eth0")
  
-@@ -147,7 +171,10 @@
+@@ -147,7 +179,10 @@
  
      # sleep a little bit
      sleep 5
@@ -59,7 +67,7 @@
      # Start kubelet & proxy in container
      docker run \
          --net=host \
-@@ -163,10 +190,11 @@
+@@ -163,10 +198,11 @@
          gcr.io/google_containers/hyperkube:v${K8S_VERSION} \
          /hyperkube kubelet --api-servers=http://${MASTER_IP}:8080 \
          --v=2 --address=0.0.0.0 --enable-server \
