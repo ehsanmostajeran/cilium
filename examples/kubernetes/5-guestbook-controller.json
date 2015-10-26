@@ -23,7 +23,7 @@
             "containers":[
                {
                   "name":"guestbook",
-                  "image":"kubernetes/guestbook:v2",
+                  "image":"cilium/guestbook:latest",
                   "ports":[
                      {
                         "name":"http-server",
