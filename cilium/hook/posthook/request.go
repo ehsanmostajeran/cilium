@@ -6,13 +6,7 @@ import (
 
 type PowerstripPostHookRequest struct {
 	m.PowerstripRequest
-	ServerResponse serverResponse
-}
-
-type serverResponse struct {
-	ContentType string
-	Body        string
-	Code        int
+	ServerResponse m.ServerResponse
 }
 
 type DockerCreateConfig struct {
