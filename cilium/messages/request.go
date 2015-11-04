@@ -11,9 +11,9 @@ type PowerstripRequest struct {
 }
 
 type ClientRequest struct {
-	Method     string
-	Request    string
-	Body       string
+	Method  string
+	Request string
+	Body    string
 }
 
 type ServerResponse struct {
