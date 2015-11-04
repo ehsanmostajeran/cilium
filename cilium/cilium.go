@@ -81,13 +81,13 @@ func setupRunnables() {
 	// Order matters, we want intent to be the last one so it can perform
 	// actions based on all merged configurations and policies.
 	if err := upr.Register(uprd.Name, uprd.DockerRunnable{}); err != nil {
-		log.Fatal("Failed while registering a runnable", err)
+		log.Fatal("Failed while registering a runnable: ", err)
 	}
 	if err := upr.Register(uprk.Name, uprk.KubernetesRunnable{}); err != nil {
-		log.Fatal("Failed while registering a runnable", err)
+		log.Fatal("Failed while registering a runnable: ", err)
 	}
 	if err := upr.Register(upri.Name, upri.IntentRunnable{}); err != nil {
-		log.Fatal("Failed while registering a runnable", err)
+		log.Fatal("Failed while registering a runnable: ", err)
 	}
 }
 
@@ -234,12 +234,6 @@ func KubernetesMasterRequestHandler(w rest.ResponseWriter, req *rest.Request) {
 
 func RequestsHandler(baseAddr string, w rest.ResponseWriter, req *rest.Request) {
 	log.Debug("Request received")
-	var (
-		powerStripReq m.PowerstripRequest
-		hook          h.Hook
-		response      interface{}
-		err           error
-	)
 	content, err := ioutil.ReadAll(req.Body)
 	req.Body.Close()
 	if err != nil {
@@ -247,17 +241,21 @@ func RequestsHandler(baseAddr string, w rest.ResponseWriter, req *rest.Request) 
 		rest.Error(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
+	var powerStripReq m.PowerstripRequest
 	if err = m.DecodeRequest(content, &powerStripReq); err != nil {
 		log.Error("DecodeRequest: %+v", err.Error())
 		rest.Error(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	if hook, err = h.GetHook(powerStripReq.Type); err != nil {
+	log.Debug("Request: %+v", powerStripReq)
+	hook, err := h.GetHook(powerStripReq.Type)
+	if err != nil {
 		log.Error("GetHook: %+v", err.Error())
 		rest.Error(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
 	}
-	if response, err = hook.ProcessRequest(baseAddr, powerStripReq.ClientRequest.Request, content); err != nil {
+	response, err := hook.ProcessRequest(baseAddr, powerStripReq.ClientRequest.Request, content)
+	if err != nil {
 		log.Warning("ProcessRequest: %+v", err.Error())
 		rest.Error(w, fmt.Sprintf("Error: %s", err.Error()), http.StatusInternalServerError)
 		return
