@@ -14,6 +14,7 @@ import (
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 	uprd "github.com/cilium-team/cilium/cilium/utils/profile/runnables/docker"
+	upri "github.com/cilium-team/cilium/cilium/utils/profile/runnables/intent"
 
 	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
 )
@@ -133,7 +134,7 @@ func TestPostHook(t *testing.T) {
 	ph.dbConn = fdb
 	ph.dockerConn = dc
 
-	upr.Register("docker-config", uprd.DockerRunnable{})
+	upr.Register(uprd.Name, uprd.DockerRunnable{})
 
 	defaultPPHR, err := ph.postHook("Default", []byte(validServerRequest))
 	if err != nil {
@@ -186,7 +187,7 @@ func TestPostHookInvalid(t *testing.T) {
 	ph.dbConn = fdb
 	ph.dockerConn = dc
 
-	upr.Register("docker-config", uprd.DockerRunnable{})
+	upr.Register(uprd.Name, uprd.DockerRunnable{})
 
 	defaultPPHR, err := ph.postHook("Default", []byte(validServerRequest))
 	if err != nil {
@@ -226,28 +227,40 @@ func TestParseRequest(t *testing.T) {
 		baseAddr string
 		want     string
 	}{
-		{`/docker/daemon/cilium-adapter`, upr.DockerDaemonCreate},
+		{`/docker/daemon/cilium-adapter`, uprd.DockerDaemonCreate},
 		{`/something`, "Default"},
 	}
 	testsHandlers := []struct {
 		baseAddr string
 		want     string
 	}{
-		{`/docker/daemon/cilium-adapter/v1.20/containers/48380b123e1be550f171787473a1f6683b1e3d966b2521b46d01eccfdf0e8b1f/restart?t=10`, "DockerDaemonRestart"},
-		{`/docker/daemon/cilium-adapter/v1.20/containers/48380b123e1be550f171787473a1f6683b1e3d966b2521b46d01eccfdf0e8b1f/start?t=10`, "DockerDaemonStart"},
+		{`/docker/daemon/cilium-adapter/v1.20/containers/48380b123e1be550f171787473a1f6683b1e3d966b2521b46d01eccfdf0e8b1f/restart?t=10`, uprd.DockerDaemonRestart},
+		{`/docker/daemon/cilium-adapter/v1.20/containers/48380b123e1be550f171787473a1f6683b1e3d966b2521b46d01eccfdf0e8b1f/start?t=10`, uprd.DockerDaemonStart},
 	}
+	upr.Register(uprd.Name, uprd.DockerRunnable{})
+	upr.Register(upri.Name, upri.IntentRunnable{})
+	p := PostHook{
+		handlers: map[string]string{},
+	}
+	for _, runnable := range upr.GetRunnables() {
+		runHandlers := runnable.GetHandlers(Type)
+		for k, v := range runHandlers {
+			p.handlers[k] = v
+		}
+	}
+
 	for _, tt := range testsHandlers {
-		if got := parseRequest(tt.baseAddr, ""); got != tt.want {
+		if got := p.parseRequest(tt.baseAddr, ""); got != tt.want {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, tt.want)
 		}
 	}
 	for _, tt := range testsBase {
-		if got := parseRequest(tt.baseAddr, validRequestHeaderWoutQuot); got != tt.want {
+		if got := p.parseRequest(tt.baseAddr, validRequestHeaderWoutQuot); got != tt.want {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, tt.want)
 		}
 	}
 	for _, tt := range testsBase {
-		if got := parseRequest(tt.baseAddr, invalidRequestHeader); got != "Default" {
+		if got := p.parseRequest(tt.baseAddr, invalidRequestHeader); got != "Default" {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, "Default")
 		}
 	}

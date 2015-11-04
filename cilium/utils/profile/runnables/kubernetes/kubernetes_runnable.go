@@ -11,12 +11,36 @@ import (
 	k8s "github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api"
 )
 
-var log = logging.MustGetLogger("cilium")
+const (
+	Name = "kubernetes-runnable"
 
-const Name = "kubernetes-runnable"
+	KubernetesMasterCreate = "KubernetesMasterCreate"
+)
+
+var (
+	log = logging.MustGetLogger("cilium")
+
+	preHookHandlers = map[string]string{
+		`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/pods(\?.*)?`:                   KubernetesMasterCreate,
+		`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/replicationcontrollers(\?.*)?`: KubernetesMasterCreate,
+		`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/service(\?.*)?`:                KubernetesMasterCreate,
+	}
+	postHookHandlers = map[string]string{}
+)
 
 type KubernetesRunnable struct {
 	kubernetescfg *upsk.KubernetesConfig
+}
+
+func (kr KubernetesRunnable) GetHandlers(typ string) map[string]string {
+	switch typ {
+	case upr.PreHook:
+		return preHookHandlers
+	case upr.PostHook:
+		return postHookHandlers
+	default:
+		return nil
+	}
 }
 
 func (kr KubernetesRunnable) GetRunnableFrom(users []up.User, policies []up.PolicySource) upr.PolicyRunnable {

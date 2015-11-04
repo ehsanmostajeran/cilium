@@ -11,12 +11,41 @@ import (
 	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
 )
 
-var log = logging.MustGetLogger("cilium")
+const (
+	Name = "docker-runnable"
 
-const Name = "docker-runnable"
+	DockerSwarmCreate   = "DockerSwarmCreate"
+	DockerDaemonCreate  = "DockerDaemonCreate"
+	DockerDaemonStart   = "DockerDaemonStart"
+	DockerDaemonRestart = "DockerDaemonRestart"
+)
+
+var (
+	log = logging.MustGetLogger("cilium")
+
+	preHookHandlers = map[string]string{
+		`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`: DockerDaemonCreate,
+		`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:  DockerSwarmCreate,
+	}
+	postHookHandlers = map[string]string{
+		`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`: DockerDaemonCreate,
+		`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:  DockerSwarmCreate,
+	}
+)
 
 type DockerRunnable struct {
 	dockercfg *upsd.DockerConfig
+}
+
+func (dr DockerRunnable) GetHandlers(typ string) map[string]string {
+	switch typ {
+	case upr.PreHook:
+		return preHookHandlers
+	case upr.PostHook:
+		return postHookHandlers
+	default:
+		return nil
+	}
 }
 
 func (dr DockerRunnable) GetRunnableFrom(users []up.User, policies []up.PolicySource) upr.PolicyRunnable {

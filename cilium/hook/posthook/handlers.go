@@ -20,20 +20,15 @@ import (
 var log = logging.MustGetLogger("cilium")
 
 const (
-	Type       = "post-hook"
+	Type       = upr.PostHook
 	Docker     = "Docker"
 	Kubernetes = "Kubernetes"
 )
 
-var handlers = map[string]string{
-	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:     upr.DockerDaemonCreate,
-	`/docker/daemon/cilium-adapter/.*/containers/.*/start(\?.*)?`:   upr.DockerDaemonStart,
-	`/docker/daemon/cilium-adapter/.*/containers/.*/restart(\?.*)?`: upr.DockerDaemonRestart,
-}
-
 type PostHook struct {
 	dbConn     ucdb.Db
 	dockerConn uc.Docker
+	handlers   map[string]string
 }
 
 // NewPostHook creates a PostHook instance and gets a New Connection to the
@@ -50,6 +45,13 @@ func NewPostHook() PostHook {
 	}
 	p.dockerConn = dockerConn
 	p.dbConn = dbConn
+	p.handlers = map[string]string{}
+	for _, runnable := range upr.GetRunnables() {
+		runHandlers := runnable.GetHandlers(Type)
+		for k, v := range runHandlers {
+			p.handlers[k] = v
+		}
+	}
 	return p
 }
 
@@ -57,13 +59,14 @@ func NewPostHook() PostHook {
 // message response for that request.
 func (p PostHook) ProcessRequest(baseAddr string, req string, cont []byte) (m.Response, error) {
 	log.Debug("Request: %+v", req)
-	return p.postHook(parseRequest(baseAddr, req), cont)
+	return p.postHook(p.parseRequest(baseAddr, req), cont)
 }
 
 // parseRequest parses de request address and returns the proper request type
 // that are understood by the runnables.
-func parseRequest(baseAddr string, req string) string {
-	for k, v := range handlers {
+func (p PostHook) parseRequest(baseAddr string, req string) string {
+	for k, v := range p.handlers {
+		log.Debug("k: %+v; v: %+v; baseAddr+req : %+v", k, v, baseAddr+req)
 		if match, _ := regexp.MatchString(k, baseAddr+req); match {
 			return v
 		}

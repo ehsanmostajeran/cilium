@@ -11,6 +11,7 @@ import (
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 	uprd "github.com/cilium-team/cilium/cilium/utils/profile/runnables/docker"
+	uprk "github.com/cilium-team/cilium/cilium/utils/profile/runnables/kubernetes"
 	upsd "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/docker"
 )
 
@@ -123,9 +124,9 @@ func TestPreHook(t *testing.T) {
 	var ph PreHook
 	ph.dbConn = f
 
-	upr.Register("docker-config", uprd.DockerRunnable{})
+	upr.Register(uprd.Name, uprd.DockerRunnable{})
 
-	defaultPPHR, err := ph.preHook(upr.DockerSwarmCreate, []byte(validRequest))
+	defaultPPHR, err := ph.preHook(uprd.DockerSwarmCreate, []byte(validRequest))
 	if err != nil {
 		t.Error("error occured while executing preHook", err)
 	}
@@ -167,7 +168,7 @@ func TestPreHookInvalid(t *testing.T) {
 	var ph PreHook
 	ph.dbConn = f
 
-	upr.Register("docker-config", uprd.DockerRunnable{})
+	upr.Register(uprd.Name, uprd.DockerRunnable{})
 
 	defaultPPHR, err := ph.preHook("Default", []byte(validRequest))
 	if err != nil {
@@ -207,17 +208,30 @@ func TestParseRequest(t *testing.T) {
 		baseAddr string
 		want     string
 	}{
-		{`/docker/swarm/cilium-adapter`, upr.DockerSwarmCreate},
-		{`/docker/daemon/cilium-adapter`, upr.DockerDaemonCreate},
+		{`/docker/swarm/cilium-adapter`, uprd.DockerSwarmCreate},
+		{`/docker/daemon/cilium-adapter`, uprd.DockerDaemonCreate},
 		{`/something`, "Default"},
 	}
+
+	upr.Register(uprd.Name, uprd.DockerRunnable{})
+	upr.Register(uprk.Name, uprk.KubernetesRunnable{})
+	p := PreHook{
+		handlers: map[string]string{},
+	}
+	for _, runnable := range upr.GetRunnables() {
+		runHandlers := runnable.GetHandlers(Type)
+		for k, v := range runHandlers {
+			p.handlers[k] = v
+		}
+	}
+
 	for _, tt := range dockerTests {
-		if got := parseRequest(tt.baseAddr, validDockerRequestHeaderWoutQuot); got != tt.want {
+		if got := p.parseRequest(tt.baseAddr, validDockerRequestHeaderWoutQuot); got != tt.want {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, tt.want)
 		}
 	}
 	for _, tt := range dockerTests {
-		if got := parseRequest(tt.baseAddr, invalidDockerRequestHeader); got != "Default" {
+		if got := p.parseRequest(tt.baseAddr, invalidDockerRequestHeader); got != "Default" {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, "Default")
 		}
 	}
@@ -226,15 +240,15 @@ func TestParseRequest(t *testing.T) {
 		baseAddr string
 		want     string
 	}{
-		{`/kubernetes/master/cilium-adapter/api/v1/namespaces`, upr.KubernetesMasterCreate},
+		{`/kubernetes/master/cilium-adapter/api/v1/namespaces`, uprk.KubernetesMasterCreate},
 	}
 	for _, tt := range kubernetesTests {
-		if got := parseRequest(tt.baseAddr, validKubernetesRequestHeaderWoutQuot); got != tt.want {
+		if got := p.parseRequest(tt.baseAddr, validKubernetesRequestHeaderWoutQuot); got != tt.want {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, tt.want)
 		}
 	}
 	for _, tt := range kubernetesTests {
-		if got := parseRequest(tt.baseAddr, invalidDockerRequestHeader); got != "Default" {
+		if got := p.parseRequest(tt.baseAddr, invalidDockerRequestHeader); got != "Default" {
 			t.Errorf("invalid parsed request:\ngot  %s\nwant %s", got, "Default")
 		}
 	}

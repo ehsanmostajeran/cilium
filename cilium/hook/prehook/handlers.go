@@ -18,21 +18,14 @@ import (
 var log = logging.MustGetLogger("cilium")
 
 const (
-	Type       = "pre-hook"
+	Type       = upr.PreHook
 	Docker     = "Docker"
 	Kubernetes = "Kubernetes"
 )
 
-var handlers = map[string]string{
-	`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:                             upr.DockerSwarmCreate,
-	`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:                            upr.DockerDaemonCreate,
-	`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/pods(\?.*)?`:                   upr.KubernetesMasterCreate,
-	`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/replicationcontrollers(\?.*)?`: upr.KubernetesMasterCreate,
-	`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/service(\?.*)?`:                upr.KubernetesMasterCreate,
-}
-
 type PreHook struct {
-	dbConn ucdb.Db
+	dbConn   ucdb.Db
+	handlers map[string]string
 }
 
 // NewPreHook creates a PreHook instance and gets a New Connection to the
@@ -44,6 +37,13 @@ func NewPreHook() PreHook {
 		log.Panicf("Error while getting a new connection to DB: %s", err)
 	}
 	p.dbConn = dbConn
+	p.handlers = map[string]string{}
+	for _, runnable := range upr.GetRunnables() {
+		runHandlers := runnable.GetHandlers(Type)
+		for k, v := range runHandlers {
+			p.handlers[k] = v
+		}
+	}
 	return p
 }
 
@@ -51,13 +51,13 @@ func NewPreHook() PreHook {
 // message response for that request.
 func (p PreHook) ProcessRequest(baseAddr string, req string, cont []byte) (m.Response, error) {
 	log.Debug("Request: %+v", req)
-	return p.preHook(parseRequest(baseAddr, req), cont)
+	return p.preHook(p.parseRequest(baseAddr, req), cont)
 }
 
 // parseRequest parses de request address and returns the proper request type
 // that are understood by the runnables.
-func parseRequest(baseAddr string, req string) string {
-	for k, v := range handlers {
+func (p PreHook) parseRequest(baseAddr string, req string) string {
+	for k, v := range p.handlers {
 		if match, _ := regexp.MatchString(k, baseAddr+req); match {
 			return v
 		}
@@ -84,7 +84,8 @@ func defaultRequest(cont []byte) (m.Response, error) {
 
 	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
 			pphreq.ClientRequest.Request,
-			pphreq.ClientRequest.Body),
+			pphreq.ClientRequest.Body,
+		),
 		nil
 }
 
@@ -167,7 +168,8 @@ func (p PreHook) preHookDocker(endPoint string, pphreq PowerstripPreHookRequest,
 	log.Info("Response created for container %s: %#v", createConfig.Name, respCreateConfig)
 	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
 			pphreq.ClientRequest.Request,
-			respCreateConfig),
+			respCreateConfig,
+		),
 		nil
 }
 
@@ -227,6 +229,7 @@ func (p PreHook) preHookKubernetes(endPoint string, pphreq PowerstripPreHookRequ
 	log.Info("Response created for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, respCreateConfig)
 	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
 			pphreq.ClientRequest.Request,
-			respCreateConfig),
+			respCreateConfig,
+		),
 		nil
 }

@@ -10,23 +10,55 @@ import (
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
 )
 
-const Name = "intent-runnable"
+const (
+	Name = "intent-runnable"
+
+	DockerSwarmCreate      = "DockerSwarmCreate"
+	DockerDaemonCreate     = "DockerDaemonCreate"
+	DockerDaemonStart      = "DockerDaemonStart"
+	DockerDaemonRestart    = "DockerDaemonRestart"
+	KubernetesMasterCreate = "KubernetesMasterCreate"
+)
 
 var (
-	log                = logging.MustGetLogger("cilium")
+	log = logging.MustGetLogger("cilium")
+
+	preHookHandlers = map[string]string{
+		`/docker/daemon/cilium-adapter/.*/containers/create(\?.*)?`:                            DockerDaemonCreate,
+		`/docker/swarm/cilium-adapter/.*/containers/create(\?.*)?`:                             DockerSwarmCreate,
+		`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/pods(\?.*)?`:                   KubernetesMasterCreate,
+		`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/replicationcontrollers(\?.*)?`: KubernetesMasterCreate,
+		`/kubernetes/master/cilium-adapter/api/v1/namespaces/.*/service(\?.*)?`:                KubernetesMasterCreate,
+	}
+	postHookHandlers = map[string]string{
+		`/docker/daemon/cilium-adapter/.*/containers/.*/start(\?.*)?`:   DockerDaemonStart,
+		`/docker/daemon/cilium-adapter/.*/containers/.*/restart(\?.*)?`: DockerDaemonRestart,
+	}
+
 	dockerHookHandlers = map[string]func(ucdb.Db, *upsi.Intent, *m.DockerCreateConfig) error{
-		upr.PreHook + upr.DockerDaemonCreate:   preHookDockerDaemonCreate,
-		upr.PreHook + upr.DockerSwarmCreate:    preHookDockerSwarmCreate,
-		upr.PostHook + upr.DockerDaemonStart:   postHookDockerDaemonStart,
-		upr.PostHook + upr.DockerDaemonRestart: postHookDockerDaemonStart,
+		upr.PreHook + DockerDaemonCreate:   preHookDockerDaemonCreate,
+		upr.PreHook + DockerSwarmCreate:    preHookDockerSwarmCreate,
+		upr.PostHook + DockerDaemonStart:   postHookDockerDaemonStart,
+		upr.PostHook + DockerDaemonRestart: postHookDockerDaemonStart,
 	}
 	kubernetesHookHandlers = map[string]func(ucdb.Db, *upsi.Intent, *m.KubernetesObjRef) error{
-		upr.PreHook + upr.KubernetesMasterCreate: preHookKubernetesMasterCreate,
+		upr.PreHook + KubernetesMasterCreate: preHookKubernetesMasterCreate,
 	}
 )
 
 type IntentRunnable struct {
 	intent *upsi.Intent
+}
+
+func (ir IntentRunnable) GetHandlers(typ string) map[string]string {
+	switch typ {
+	case upr.PreHook:
+		return preHookHandlers
+	case upr.PostHook:
+		return postHookHandlers
+	default:
+		return nil
+	}
 }
 
 func (ir IntentRunnable) DockerExec(hookType, reqType string, db ucdb.Db, cc *m.DockerCreateConfig) error {

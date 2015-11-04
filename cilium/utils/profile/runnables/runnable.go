@@ -13,12 +13,6 @@ type Runnables map[string]PolicyRunnable
 const (
 	PreHook  = "pre-hook"
 	PostHook = "post-hook"
-
-	DockerSwarmCreate      = "DockerSwarmCreate"
-	DockerDaemonCreate     = "DockerDaemonCreate"
-	DockerDaemonStart      = "DockerDaemonStart"
-	DockerDaemonRestart    = "DockerDaemonRestart"
-	KubernetesMasterCreate = "KubernetesMasterCreate"
 )
 
 var (
@@ -45,4 +39,5 @@ type PolicyRunnable interface {
 	GetRunnableFrom(users []up.User, policies []up.PolicySource) PolicyRunnable
 	DockerExec(hookType, reqType string, db ucdb.Db, cc *m.DockerCreateConfig) error
 	KubernetesExec(hookType, reqType string, db ucdb.Db, cc *m.KubernetesObjRef) error
+	GetHandlers(typ string) map[string]string
 }
