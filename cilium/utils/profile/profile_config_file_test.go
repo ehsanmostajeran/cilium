@@ -60,7 +60,7 @@ func TestReadOVSConfigFiles(t *testing.T) {
 					Config: upsi.Intent{
 						NetPolicy: upsi.NetPolicy{
 							OVSConfig: upsi.OVSConfig{
-								ConfigFiles: new([]string),
+								ConfigFiles: &[]string{},
 							},
 						},
 					},
@@ -80,8 +80,8 @@ func TestReadOVSConfigFiles(t *testing.T) {
 					Config: upsi.Intent{
 						NetPolicy: upsi.NetPolicy{
 							OVSConfig: upsi.OVSConfig{
-								ConfigFiles: new([]string),
-								Rules:       new([]string),
+								ConfigFiles: &[]string{},
+								Rules:       &[]string{},
 							},
 						},
 					},
@@ -101,8 +101,8 @@ func TestReadOVSConfigFiles(t *testing.T) {
 					Config: upsi.Intent{
 						NetPolicy: upsi.NetPolicy{
 							OVSConfig: upsi.OVSConfig{
-								ConfigFiles: new([]string),
-								Rules:       new([]string),
+								ConfigFiles: &[]string{},
+								Rules:       &[]string{},
 							},
 						},
 					},
@@ -122,8 +122,8 @@ func TestReadOVSConfigFiles(t *testing.T) {
 					Config: upsi.Intent{
 						NetPolicy: upsi.NetPolicy{
 							OVSConfig: upsi.OVSConfig{
-								ConfigFiles: new([]string),
-								Rules:       new([]string),
+								ConfigFiles: &[]string{},
+								Rules:       &[]string{},
 							},
 						},
 					},

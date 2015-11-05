@@ -46,7 +46,7 @@ func (p *Policy) ReadOVSConfigFiles(basePath string) error {
 	}
 	log.Debug("Rules read: %+v\n", rules)
 	if p.IntentConfig.Config.NetPolicy.OVSConfig.Rules == nil {
-		p.IntentConfig.Config.NetPolicy.OVSConfig.Rules = new([]string)
+		p.IntentConfig.Config.NetPolicy.OVSConfig.Rules = &[]string{}
 	}
 	*p.IntentConfig.Config.NetPolicy.OVSConfig.Rules =
 		append(*p.IntentConfig.Config.NetPolicy.OVSConfig.Rules, rules...)

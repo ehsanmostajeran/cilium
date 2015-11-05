@@ -67,33 +67,7 @@ func (i Intent) GoString() string {
 
 // Value marshals the receiver Intent into a json string.
 func (i Intent) Value() (string, error) {
-	// We wave to save all slices because of a weird behaviour of JSON encoder
-	// that sets to null if the len of the slice is 0.
-	var oldAddArguments, oldOVSConfigConfigFiles, oldOVSConfigRules *[]string
-
-	if i.AddArguments != nil && len(*i.AddArguments) == 0 {
-		oldAddArguments = i.AddArguments
-		i.AddArguments = nil
-	}
-	if i.NetPolicy.OVSConfig.ConfigFiles != nil && len(*i.NetPolicy.OVSConfig.ConfigFiles) == 0 {
-		oldOVSConfigConfigFiles = i.NetPolicy.OVSConfig.ConfigFiles
-		i.NetPolicy.OVSConfig.ConfigFiles = nil
-	}
-	if i.NetPolicy.OVSConfig.Rules != nil && len(*i.NetPolicy.OVSConfig.Rules) == 0 {
-		oldOVSConfigRules = i.NetPolicy.OVSConfig.Rules
-		i.NetPolicy.OVSConfig.Rules = nil
-	}
-	data, err := json.Marshal(i)
-	if oldAddArguments != nil {
-		i.AddArguments = oldAddArguments
-	}
-	if oldOVSConfigConfigFiles != nil {
-		i.NetPolicy.OVSConfig.ConfigFiles = oldOVSConfigConfigFiles
-	}
-	if oldOVSConfigRules != nil {
-		i.NetPolicy.OVSConfig.Rules = oldOVSConfigRules
-	}
-	if err != nil {
+	if data, err := json.Marshal(i); err != nil {
 		return "", err
 	} else {
 		return string(data), err
@@ -254,8 +228,8 @@ func (sky ServiceKeyType) GoString() string {
 
 func NewOVSConfig() *OVSConfig {
 	return &OVSConfig{
-		ConfigFiles: new([]string),
-		Rules:       new([]string),
+		ConfigFiles: &[]string{},
+		Rules:       &[]string{},
 	}
 }
 
@@ -289,7 +263,7 @@ func getDefaultOf(structure interface{}, field string) string {
 // SetDefaults sets all receiver's fields into the values set under
 // "default_value" tag.
 func (i *Intent) SetDefaults() {
-	i.AddArguments = new([]string)
+	i.AddArguments = &[]string{}
 	i.AddToDNS = new(bool)
 	if addToDNS, err := strconv.ParseBool(getDefaultOf(*i, "AddToDNS")); err == nil {
 		*i.AddToDNS = addToDNS
@@ -330,8 +304,8 @@ func (i *Intent) SetDefaults() {
 	if namespace, err := strconv.ParseInt(getDefaultOf(i.NetConf, "Namespace"), 10, 32); err == nil {
 		*i.NetConf.Namespace = int(namespace)
 	}
-	i.NetPolicy.OVSConfig.ConfigFiles = new([]string)
-	i.NetPolicy.OVSConfig.Rules = new([]string)
+	i.NetPolicy.OVSConfig.ConfigFiles = &[]string{}
+	i.NetPolicy.OVSConfig.Rules = &[]string{}
 	i.RemoveDockerLinks = new(bool)
 	if removeDockerLinks, err := strconv.ParseBool(getDefaultOf(*i, "RemoveDockerLinks")); err == nil {
 		*i.RemoveDockerLinks = removeDockerLinks
@@ -366,13 +340,13 @@ func (i *Intent) MergeWith(other Intent) error {
 	// itself)
 	if other.NetPolicy.OVSConfig.ConfigFiles != nil && !reflect.DeepEqual(i.NetPolicy.OVSConfig.ConfigFiles, other.NetPolicy.OVSConfig.ConfigFiles) {
 		if i.NetPolicy.OVSConfig.ConfigFiles == nil {
-			i.NetPolicy.OVSConfig.ConfigFiles = new([]string)
+			i.NetPolicy.OVSConfig.ConfigFiles = &[]string{}
 		}
 		*i.NetPolicy.OVSConfig.ConfigFiles = append(*i.NetPolicy.OVSConfig.ConfigFiles, *other.NetPolicy.OVSConfig.ConfigFiles...)
 	}
 	if other.NetPolicy.OVSConfig.Rules != nil && !reflect.DeepEqual(i.NetPolicy.OVSConfig.Rules, other.NetPolicy.OVSConfig.Rules) {
 		if i.NetPolicy.OVSConfig.Rules == nil {
-			i.NetPolicy.OVSConfig.Rules = new([]string)
+			i.NetPolicy.OVSConfig.Rules = &[]string{}
 		}
 		*i.NetPolicy.OVSConfig.Rules = append(*i.NetPolicy.OVSConfig.Rules, *other.NetPolicy.OVSConfig.Rules...)
 	}
@@ -414,14 +388,14 @@ func (i *Intent) OverwriteWith(other Intent) error {
 
 	if other.NetPolicy.OVSConfig.ConfigFiles != nil {
 		if i.NetPolicy.OVSConfig.ConfigFiles == nil {
-			i.NetPolicy.OVSConfig.ConfigFiles = new([]string)
+			i.NetPolicy.OVSConfig.ConfigFiles = &[]string{}
 		}
 		*i.NetPolicy.OVSConfig.ConfigFiles = append(*other.NetPolicy.OVSConfig.ConfigFiles, *oldOVSConfig.ConfigFiles...)
 		*i.NetPolicy.OVSConfig.ConfigFiles = removeDuplicates(*i.NetPolicy.OVSConfig.ConfigFiles)
 	}
 	if other.NetPolicy.OVSConfig.Rules != nil {
 		if i.NetPolicy.OVSConfig.Rules == nil {
-			i.NetPolicy.OVSConfig.Rules = new([]string)
+			i.NetPolicy.OVSConfig.Rules = &[]string{}
 		}
 		*i.NetPolicy.OVSConfig.Rules = append(*other.NetPolicy.OVSConfig.Rules, *oldOVSConfig.Rules...)
 		*i.NetPolicy.OVSConfig.Rules = removeDuplicates(*i.NetPolicy.OVSConfig.Rules)

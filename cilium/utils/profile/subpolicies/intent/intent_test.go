@@ -287,6 +287,7 @@ func TestMergeWith(t *testing.T) {
 			t.Logf("i1: %#v\n", i1)
 			t.Logf("i2: %#v\n", i2)
 			t.Errorf("got  %#v\nwant %#v", wanted, !wanted)
+			panic("Fatal")
 		}
 	}
 
@@ -304,7 +305,6 @@ func TestMergeWith(t *testing.T) {
 
 	i2 := NewIntent()
 	cpy, err := i1.Value()
-	cpy, err = i1.Value()
 	if err != nil {
 		t.Errorf("error while running Value on i1: %s", err)
 	}
@@ -567,12 +567,12 @@ func TestIntentOverwriteWith(t *testing.T) {
 
 func TestReadOVSConfigFiles(t *testing.T) {
 	ovsConfig := OVSConfig{
-		ConfigFiles: new([]string),
-		Rules:       new([]string),
+		ConfigFiles: &[]string{},
+		Rules:       &[]string{},
 	}
 	ovsConfigWant := OVSConfig{
-		ConfigFiles: new([]string),
-		Rules:       new([]string),
+		ConfigFiles: &[]string{},
+		Rules:       &[]string{},
 	}
 	*ovsConfig.Rules = append(*ovsConfig.Rules,
 		`priority=70,ip,nw_dst=1.1.0.128/26,actions=NORMAL`,
