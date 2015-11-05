@@ -187,7 +187,7 @@ func netConfDocker(dbConn ucdb.Db, intent *upsi.Intent, containerConfig *m.Docke
 	if err := addToLoadBalancer(dbConn, intent, []net.IP{ip}, containerConfig.ID,
 		containerConfig.Name, containerConfig.Labels); err != nil {
 
-		log.Error("Fail creating network rules for %s: %s", containerConfig.ID, err)
+		log.Error("Fail while adding container to load balancer %s: %s", containerConfig.ID, err)
 	}
 
 	return nil
