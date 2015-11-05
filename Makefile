@@ -79,6 +79,7 @@ reset-kubernetes:
 	@vagrant snapshot go node1 all-installed
 	@vagrant snapshot go node2 all-installed
 	@./scripts/setup-kubernetes.sh
+	@./scripts/load-policy.sh
 
 infect:
 	@./scripts/infect-node.sh

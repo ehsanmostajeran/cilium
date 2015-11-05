@@ -37,14 +37,6 @@ else
     echo "Docker endpoint is set to: ${DOCKER_ENDPOINT}"
 fi
 
-# See if there's a different IP set
-if [ -z ${IP} ]; then
-    IP=$(hostname -i)
-    echo "IP not set, using default: ${IP}"
-else
-    echo "IP is set to: ${IP}"
-fi
-
 # Make sure docker daemon is running
 if ( ! ps -ef | grep "/usr/bin/docker" | grep -v 'grep' &> /dev/null  ); then
     echo "Docker is not running on this machine!"
@@ -53,13 +45,11 @@ fi
 
 # Make sure k8s version env is properly set
 if [ -z ${K8S_VERSION} ]; then
-    K8S_VERSION="1.0.3"
+    K8S_VERSION="1.0.7"
     echo "K8S_VERSION is not set, using default: ${K8S_VERSION}"
 else
     echo "k8s version is set to: ${K8S_VERSION}"
 fi
-
-
 
 # Run as root
 if [ "$(id -u)" != "0" ]; then
@@ -88,7 +78,7 @@ detect_lsb() {
         *64)
             ;;
         *)
-	        echo "Error: We currently only support 64-bit platforms."
+	        echo "Error: We currently only support 64-bit platforms."	    
 	        exit 1
 	        ;;
     esac
@@ -169,7 +159,14 @@ start_k8s() {
             DOCKER_CONF="/etc/default/docker"
             echo "DOCKER_OPTS=\"\$DOCKER_OPTS --mtu=${FLANNEL_MTU} --bip=${FLANNEL_SUBNET}\"" | sudo tee -a ${DOCKER_CONF}
             ifconfig docker0 down
-            apt-get install bridge-utils && brctl delbr docker0 && service docker restart
+            apt-get install bridge-utils
+            brctl delbr docker0
+            service docker stop
+            while [ `ps aux | grep /usr/bin/docker | grep -v grep | wc -l` -gt 0 ]; do
+                echo "Waiting for docker to terminate"
+                sleep 1
+            done
+            service docker start
             ;;
         *)
             echo "Unsupported operations system ${lsb_dist}"
@@ -182,8 +179,9 @@ start_k8s() {
 
     # Start cilium
     $dir/../../../entrypoint.sh infect
-
+    
     # Start kubelet & proxy in container
+    # TODO: Use secure port for communication
     docker run \
         --net=host \
         --pid=host \
@@ -192,17 +190,18 @@ start_k8s() {
         -d \
         -v /sys:/sys:ro \
         -v /var/run:/var/run:rw  \
+        -v /:/rootfs:ro \
         -v /dev:/dev \
         -v /var/lib/docker/:/var/lib/docker:rw \
         -v /var/lib/kubelet/:/var/lib/kubelet:rw \
         gcr.io/google_containers/hyperkube:v${K8S_VERSION} \
         /hyperkube kubelet --api-servers=http://${MASTER_IP}:8080 \
         --v=2 --address=0.0.0.0 --enable-server \
-        --hostname-override=${IP} \
         --cluster-dns=10.0.0.10 \
         --cluster-domain=cluster.local \
-	--docker-endpoint=${DOCKER_ENDPOINT}
-
+        --containerized \
+        --docker-endpoint=${DOCKER_ENDPOINT}
+    
     docker run \
         -d \
         --net=host \

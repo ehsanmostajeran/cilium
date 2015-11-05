@@ -498,7 +498,11 @@ services/guestbook
 guestbook service is running*
 
 To test the guestbook example, open your browser and type
-`http://MASTER-IP:30000` and you should see it running.
+`http://<NODE-WITH-GUESTBOOK-SERVICE-IP>:30000` and you should see it running.
+
+*To know which nodes have the `guestbook` service running run:
+`kubectl get pods -o wide` to see which nodes have pods starting with
+`guestbook-`.*
 
 ![guestbook-kubernetes](docs/guestbook-kubernetes.png)
 

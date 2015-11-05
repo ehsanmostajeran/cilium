@@ -28,9 +28,9 @@ cilium/debug_shell:latest \
 "powerstrip-kubernetes.ditar" \
 cilium/powerstrip:kubernetes \
 "etcd.ditar" \
-gcr.io/google_containers/etcd:2.0.12 \
+gcr.io/google_containers/etcd:2.0.13 \
 "hyperkube.ditar" \
-gcr.io/google_containers/hyperkube:v1.0.3 \
+gcr.io/google_containers/hyperkube:v1.0.7 \
 "flannel.ditar" \
 quay.io/coreos/flannel:0.5.3 \
 "gb-redisslave.ditar"
