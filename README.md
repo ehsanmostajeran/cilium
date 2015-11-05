@@ -50,10 +50,10 @@ following requirements:
 
 ### Requirements for each node
 
-- Docker (>=1.8.0)
-- Open vSwitch (>=2.3.2) (for each node)
+- Docker (>=1.8.0) (tested with 1.9.0)
+- Open vSwitch (>=2.3.2) (tested with 2.4.0) (for each node)
 - ~5 GB free disk space (for each node)
-- Compose (>=1.3.0) (for demo purposes)
+- Compose (>=1.3.0) (tested with 1.5.0) (for demo purposes)
 
 ### Re-check all dependencies on each node
 
@@ -128,8 +128,8 @@ $ swarm-master docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{
 CONTAINER ID        IMAGE                              STATUS              NAMES
 d141780d59b2        cilium/docker-collector:latest     Up 6 minutes        node2/cilium-docker-collector
 cf3e329c9a24        cilium/cilium                      Up 6 minutes        node2/cilium-swarm-event-handler
-f4ca2699a644        swarm:0.4.0                        Up 6 minutes        node2/cilium-swarm-master
-5983cec8cc1b        swarm:0.4.0                        Up 6 minutes        node2/cilium-swarm-agent
+f4ca2699a644        swarm:1.0.0                        Up 6 minutes        node2/cilium-swarm-master
+5983cec8cc1b        swarm:1.0.0                        Up 6 minutes        node2/cilium-swarm-agent
 24af1ac8e4a3        cilium/powerstrip:latest           Up 7 minutes        node2/cilium-powerstrip-pre-daemon
 3befe78a69cc        cilium/powerstrip:latest           Up 7 minutes        node2/cilium-powerstrip-pre-swarm
 a80915511fe2        cilium/cilium                      Up 7 minutes        node2/cilium
@@ -279,10 +279,10 @@ and [cilium version](https://github.com/cilium-team/cilium/tree/master/scripts/k
 
 ### Requirements for each node
 
-- Docker (>=1.8.0)
-- Open vSwitch (>=2.3.2) (for each node)
+
+- Docker (>=1.8.0) (tested with 1.9.0)
+- Open vSwitch (>=2.3.2) (tested with 2.4.0) (for each node)
 - ~5 GB free disk space (for each node)
-- Compose (>=1.3.0) (for demo purposes)
 
 ### Re-check all dependencies on each node
 
@@ -367,8 +367,8 @@ dd92ebbb771b        gcr.io/google_containers/hyperkube:v1.0.3   Up 9 minutes    
 f5825420d306        cilium/docker-dns-rest:1.0-rr-with-del      Up 9 minutes        cilium-dns
 d9c9b66001be        cilium/docker-collector:latest              Up 9 minutes        cilium-docker-collector
 4be30cb51d74        cilium/cilium                               Up 9 minutes        cilium-swarm-event-handler
-c55f4d4b07a8        swarm:0.4.0                                 Up 9 minutes        cilium-swarm-master
-5aa623677592        swarm:0.4.0                                 Up 9 minutes        cilium-swarm-agent
+c55f4d4b07a8        swarm:1.0.0                                 Up 9 minutes        cilium-swarm-master
+5aa623677592        swarm:1.0.0                                 Up 9 minutes        cilium-swarm-agent
 6600d4c10741        cilium/powerstrip:latest                    Up 9 minutes        cilium-powerstrip-pre-daemon
 9b2e29e14206        cilium/powerstrip:latest                    Up 9 minutes        cilium-powerstrip-pre-pwr-daemon
 caec49216ecc        cilium/powerstrip:kubernetes                Up 9 minutes        cilium-powerstrip-pre-k8s-master

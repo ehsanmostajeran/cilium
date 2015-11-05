@@ -291,8 +291,8 @@ $ docker ps --format -a 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t{{.Names}}'
 CONTAINER ID        IMAGE                              STATUS              NAMES
 02baa66af170        cilium/docker-collector:latest     Up 3 minutes        cilium-docker-collector
 9f12c0c10736        cilium/cilium                      Up 3 minutes        cilium-swarm-event-handler
-5e6340c9740a        swarm:0.4.0                        Up 4 minutes        cilium-swarm-master
-7a0586781c17        swarm:0.4.0                        Up 4 minutes        cilium-swarm-agent
+5e6340c9740a        swarm:1.0.0                        Up 4 minutes        cilium-swarm-master
+7a0586781c17        swarm:1.0.0                        Up 4 minutes        cilium-swarm-agent
 810972c7d0ef        cilium/powerstrip:latest           Up 4 minutes        cilium-powerstrip-pre-daemon
 4968c7d9a70e        cilium/powerstrip:latest           Up 4 minutes        cilium-powerstrip-pre-swarm
 7757de87029b        cilium/cilium                      Up 4 minutes        cilium
@@ -328,8 +328,8 @@ $ docker-master docker ps -a  --format 'table {{.ID}}\t{{.Image}}\t{{.Status}}\t
 CONTAINER ID        IMAGE                              STATUS              NAMES
 d141780d59b2        cilium/docker-collector:latest     Up 6 minutes        node2/cilium-docker-collector
 cf3e329c9a24        cilium/cilium                      Up 6 minutes        node2/cilium-swarm-event-handler
-f4ca2699a644        swarm:0.4.0                        Up 6 minutes        node2/cilium-swarm-master
-5983cec8cc1b        swarm:0.4.0                        Up 6 minutes        node2/cilium-swarm-agent
+f4ca2699a644        swarm:1.0.0                        Up 6 minutes        node2/cilium-swarm-master
+5983cec8cc1b        swarm:1.0.0                        Up 6 minutes        node2/cilium-swarm-agent
 24af1ac8e4a3        cilium/powerstrip:latest           Up 7 minutes        node2/cilium-powerstrip-pre-daemon
 3befe78a69cc        cilium/powerstrip:latest           Up 7 minutes        node2/cilium-powerstrip-pre-swarm
 a80915511fe2        cilium/cilium                      Up 7 minutes        node2/cilium
@@ -337,8 +337,8 @@ a80915511fe2        cilium/cilium                      Up 7 minutes        node2
 30343151fde0        progrium/consul                    Up 7 minutes        node2/cilium-consul
 fe0c2883cd36        cilium/docker-collector:latest     Up 7 minutes        node1/cilium-docker-collector
 61b2f42c6286        cilium/cilium                      Up 7 minutes        node1/cilium-swarm-event-handler
-781156cf2c4d        swarm:0.4.0                        Up 7 minutes        node1/cilium-swarm-master
-28bcfd87d4e2        swarm:0.4.0                        Up 7 minutes        node1/cilium-swarm-agent
+781156cf2c4d        swarm:1.0.0                        Up 7 minutes        node1/cilium-swarm-master
+28bcfd87d4e2        swarm:1.0.0                        Up 7 minutes        node1/cilium-swarm-agent
 ddc75b3cfe83        cilium/powerstrip:latest           Up 7 minutes        node1/cilium-powerstrip-pre-daemon
 f9dbc2892627        cilium/powerstrip:latest           Up 7 minutes        node1/cilium-powerstrip-pre-swarm
 16d403b12c77        cilium/cilium                      Up 7 minutes        node1/cilium
@@ -346,8 +346,8 @@ f9dbc2892627        cilium/powerstrip:latest           Up 7 minutes        node1
 9f12c0c10736        cilium/cilium                      Up 7 minutes        localhost/cilium-swarm-event-handler
 d9d304ac09f6        elasticsearch:1.7.1                Up 7 minutes        node1/cilium-elastic
 a7838bdc7061        progrium/consul                    Up 7 minutes        node1/cilium-consul
-5e6340c9740a        swarm:0.4.0                        Up 7 minutes        localhost/cilium-swarm-master
-7a0586781c17        swarm:0.4.0                        Up 7 minutes        localhost/cilium-swarm-agent
+5e6340c9740a        swarm:1.0.0                        Up 7 minutes        localhost/cilium-swarm-master
+7a0586781c17        swarm:1.0.0                        Up 7 minutes        localhost/cilium-swarm-agent
 810972c7d0ef        cilium/powerstrip:latest           Up 7 minutes        localhost/cilium-powerstrip-pre-daemon
 4968c7d9a70e        cilium/powerstrip:latest           Up 7 minutes        localhost/cilium-powerstrip-pre-swarm
 7757de87029b        cilium/cilium                      Up 7 minutes        localhost/cilium

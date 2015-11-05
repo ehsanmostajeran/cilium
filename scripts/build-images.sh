@@ -7,8 +7,8 @@ docker_images=(\
 cilium/powerstrip:latest \
 "redis-latest.ditar" \
 redis:latest \
-"swarm-0.4.0.ditar" \
-swarm:0.4.0 \
+"swarm-1.0.0.ditar" \
+swarm:1.0.0 \
 "elasticsearch-1.7.1.ditar" \
 elasticsearch:1.7.1 \
 "kibana-4.1.1.ditar" \

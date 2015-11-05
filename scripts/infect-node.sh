@@ -2,7 +2,7 @@
 set -e
 dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-SWARM_VERSION="0.4.0"
+SWARM_VERSION="1.0.0"
 PWR_BEF_DAEMON_PORT="2371"
 SWARM_MASTER_PORT="2373"
 PWR_BEF_SWARM_PORT="2375"

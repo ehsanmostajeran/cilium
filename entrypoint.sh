@@ -78,8 +78,8 @@ prepare(){
     docker_images=(\
         "cilium-powerstrip-latest.ditar" \
         cilium/powerstrip:latest \
-        "swarm-0.4.0.ditar" \
-        swarm:0.4.0 \
+        "swarm-1.0.0.ditar" \
+        swarm:1.0.0 \
         "elasticsearch-1.7.1.ditar" \
         elasticsearch:1.7.1 \
         "haproxy-rest.ditar" \
@@ -188,7 +188,7 @@ store_policy(){
     net_ip=$(requote "$NET_IP")
     sed -i "s/192.168.50.0\/24/$net_ip/g" "$policies_tmp/1-cluster.yml"
     docker_IP=$(ip -f inet -o addr show docker0|cut -d\  -f 7 | cut -d/ -f 1)
-    sed -i "s/172.17.42.1/$docker_IP/g" "$policies_tmp/1-cluster.yml"
+    sed -i "s/172.17.0.1/$docker_IP/g" "$policies_tmp/1-cluster.yml"
     docker run --rm \
         -e ELASTIC_IP=$IP \
         -v "$policies_tmp":/opt/cilium/policies/ \
