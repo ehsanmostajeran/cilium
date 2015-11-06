@@ -70,10 +70,19 @@ func init() {
 
 	setupLOG()
 
-	log.Debug("Loglevel = %+v", logLevel)
-	log.Debug("events = %+v", events)
-	log.Debug("listOnlyForEvents = %+v", listOnlyForEvents)
+	log.Debug("logLevel: %+v", logLevel)
+	log.Debug("filename: %+v", filename)
+	log.Debug("deleteDB: %+v", deleteDB)
+	log.Debug("flushConfig: %+v", flushConfig)
+	log.Debug("events: %+v", events)
+	log.Debug("listOnlyForEvents: %+v", listOnlyForEvents)
+	log.Debug("port: %+v", port)
 	log.Debug("HOST_IP = %+v", os.Getenv("HOST_IP"))
+	log.Debug("DOCKER_CERT_PATH = %+v", os.Getenv("DOCKER_CERT_PATH"))
+	log.Debug("DOCKER_HOST = %+v", os.Getenv("DOCKER_HOST"))
+	log.Debug("ELASTIC_PORT = %+v", os.Getenv("ELASTIC_PORT"))
+	log.Debug("ELASTIC_IP = %+v", os.Getenv("ELASTIC_IP"))
+	log.Debug("PIPEWORK = %+v", os.Getenv("PIPEWORK"))
 }
 
 func setupRunnables() {
@@ -133,26 +142,36 @@ func setupLOG() {
 	}
 }
 
-func main() {
-	if deleteDB {
+func databaseOperations(delDB, flushCfg bool, fname string) (bool, error) {
+	exit := delDB || flushCfg || len(fname) != 0
+
+	if delDB {
 		if err := ucdb.InitDb(""); err != nil {
-			log.Error("Error: %s", err)
-			os.Exit(-1)
-		} else {
-			log.Info("Database deleted with success")
+			return exit, err
 		}
+		log.Info("Database deleted with success")
 	}
-	if len(filename) != 0 {
-		if err := c.StoreInDB(filename, flushConfig); err != nil {
-			log.Error("Error: %s", err)
-			os.Exit(-1)
+	if flushCfg {
+		if err := ucdb.FlushConfig(""); err != nil {
+			return exit, err
+		}
+		log.Info("Database successfuly cleaned")
+	}
+	if len(fname) != 0 {
+		if err := c.StoreInDB(filename); err != nil {
+			return exit, err
 		}
 		log.Info("File successfuly stored")
+	}
+	return exit, nil
+}
+
+func main() {
+	if exit, err := databaseOperations(deleteDB, flushConfig, filename); err != nil {
+		log.Error("Error: %+v", err)
+		os.Exit(-1)
+	} else if exit {
 		os.Exit(0)
-	} else {
-		if deleteDB || flushConfig {
-			os.Exit(0)
-		}
 	}
 
 	dbConn, err := ucdb.NewConn()

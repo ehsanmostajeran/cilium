@@ -43,18 +43,10 @@ func storePolicies(conn ucdb.Db, pf up.ProfileFile, basePath string) error {
 	return nil
 }
 
-func StoreInDB(filename string, flushConfig bool) error {
+func StoreInDB(filename string) error {
 	log.Debug("")
-	var (
-		conn ucdb.Db
-		err  error
-	)
-	if flushConfig {
-		if err = ucdb.FlushConfig(""); err != nil {
-			return err
-		}
-	}
-	if conn, err = ucdb.NewConn(); err != nil {
+	conn, err := ucdb.NewConn()
+	if err != nil {
 		return err
 	}
 	defer conn.Close()
