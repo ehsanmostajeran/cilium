@@ -16,7 +16,7 @@ import (
 	upl "github.com/cilium-team/cilium/cilium/utils/plugins/loadbalancer"
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/gopkg.in/olivere/elastic.v2"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 )
 
 type EConn struct {

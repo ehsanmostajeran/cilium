@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/gopkg.in/olivere/elastic.v2"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/gopkg.in/olivere/elastic.v3"
 )
 
 type elasticSearchBackend struct {
