@@ -1,11 +1,12 @@
 package profile
 
 import (
+	"encoding/json"
 	"net"
 	"regexp"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
 	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 )
 
 var log = logging.MustGetLogger("cilium")

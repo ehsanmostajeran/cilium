@@ -7,7 +7,7 @@ import (
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 	upsk "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/kubernetes"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 	k8s "github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api"
 )
 
@@ -77,7 +77,6 @@ func (kr KubernetesRunnable) GetRunnableFrom(users []up.User, policies []up.Poli
 		log.Debug("current finalKubernetesCfg: %+v", finalKubernetesCfg)
 	}
 	log.Debug("final finalKubernetesCfg: %+v", finalKubernetesCfg)
-
 	return KubernetesRunnable{kubernetescfg: &finalKubernetesCfg}
 }
 

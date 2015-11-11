@@ -7,7 +7,7 @@ import (
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 	upsi "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/intent"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 )
 
 const (

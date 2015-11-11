@@ -22,8 +22,9 @@ import (
 	uprk "github.com/cilium-team/cilium/cilium/utils/profile/runnables/kubernetes"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/ant0ine/go-json-rest/rest"
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
+	el "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/elastic-go-logging"
 	dfsouza "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/samalba/dockerclient"
 )
 
@@ -115,6 +116,9 @@ func setupLOG() {
 	} else {
 		logTimename := time.Now().Format(logNameTimeFormat)
 		fo, err := os.Create(os.TempDir() + "/cilium-" + logTimename + ".log")
+		if err != nil {
+			log.Error("Error while creating log file: %v", err)
+		}
 		fileBackend := logging.NewLogBackend(fo, "", 0)
 
 		db, err := ucdb.NewElasticConn()
@@ -126,7 +130,7 @@ func setupLOG() {
 			log.Debug("Error while getting the hostname: %v", err)
 		}
 
-		elasticBackend, err := logging.NewElasticSearchBackendFrom(db.Client, "cilium-log", hn)
+		elasticBackend, err := el.NewElasticSearchBackendFrom(db.Client, "cilium-log", hn, 0)
 		if err != nil {
 			log.Error("Error while getting the new logrus hook: %v", err)
 		}

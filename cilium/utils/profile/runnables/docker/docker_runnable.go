@@ -7,8 +7,8 @@ import (
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 	upsd "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/docker"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
 	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 )
 
 const (

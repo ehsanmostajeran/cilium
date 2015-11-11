@@ -5,8 +5,8 @@ import (
 	"errors"
 	"sort"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/mergo"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 	k8s "github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api"
 )
 

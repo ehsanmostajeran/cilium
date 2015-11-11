@@ -20,8 +20,8 @@
 			"Rev": "b965b613227fddccbfffe13eae360ed3fa822f8d"
 		},
 		{
-			"ImportPath": "github.com/cilium-team/go-logging",
-			"Rev": "718ce742417921446b4aa9f3f8315b3e7f5c06b0"
+			"ImportPath": "github.com/cilium-team/elastic-go-logging",
+			"Rev": "3585311669f7fa63ccc64c819bebf86ea48829c8"
 		},
 		{
 			"ImportPath": "github.com/cilium-team/mergo",
@@ -93,6 +93,10 @@
 		{
 			"ImportPath": "github.com/matttproud/golang_protobuf_extensions/pbutil",
 			"Rev": "d0c3fe89de86839aecf2e0579c40ba3bb336a453"
+		},
+		{
+			"ImportPath": "github.com/op/go-logging",
+			"Rev": "e8d5414f0947014548c2334044a0fac13187dfee"
 		},
 		{
 			"ImportPath": "github.com/pborman/uuid",

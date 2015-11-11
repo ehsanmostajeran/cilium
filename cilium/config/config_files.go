@@ -12,8 +12,8 @@ import (
 	upl "github.com/cilium-team/cilium/cilium/utils/plugins/loadbalancer"
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/go-logging"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/yaml"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 )
 
 var (
