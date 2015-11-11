@@ -9,8 +9,8 @@ cilium/powerstrip:latest \
 redis:latest \
 "swarm-1.0.0.ditar" \
 swarm:1.0.0 \
-"elasticsearch-1.7.1.ditar" \
-elasticsearch:1.7.1 \
+"elasticsearch-2.0.0.ditar" \
+elasticsearch:2.0.0 \
 "kibana-4.1.1.ditar" \
 kibana:4.1.1 \
 "haproxy-rest.ditar" \

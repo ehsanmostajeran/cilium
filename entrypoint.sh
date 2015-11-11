@@ -80,8 +80,8 @@ prepare(){
         cilium/powerstrip:latest \
         "swarm-1.0.0.ditar" \
         swarm:1.0.0 \
-        "elasticsearch-1.7.1.ditar" \
-        elasticsearch:1.7.1 \
+        "elasticsearch-2.0.0.ditar" \
+        elasticsearch:2.0.0 \
         "haproxy-rest.ditar" \
         tnolet/haproxy-rest:latest \
         "consul.ditar" \
@@ -120,7 +120,8 @@ infect(){
     chmod +x "$backend_tmp/utils.sh"
     curl -Ssl -o "$scripts_tmp/infect-node.sh" "$address/scripts/infect-node.sh"
     chmod +x "$scripts_tmp/infect-node.sh"
-    curl -Ssl -o "$external_deps_temp/marvel-latest.zip" "$address/external-deps/marvel-latest.zip"
+    curl -Ssl -o "$external_deps_temp/marvel-agent-2.0.0.zip" "$address/external-deps/marvel-agent-2.0.0.zip"
+    curl -Ssl -o "$external_deps_temp/license-2.0.0.zip" "$address/external-deps/license-2.0.0.zip"
     curl -Ssl -o "$external_deps_temp/docker-collector-configs/templates.json" "$address/external-deps/docker-collector-configs/templates.json"
     curl -Ssl -o "$external_deps_temp/docker-collector-configs/configs.json" "$address/external-deps/docker-collector-configs/configs.json"
     echo "Downloads completed..."

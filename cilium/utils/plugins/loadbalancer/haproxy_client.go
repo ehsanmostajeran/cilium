@@ -28,6 +28,20 @@ type HAProxyClient struct {
 	Port string `json:"port,omitempty" yaml:"port,omitempty"`
 }
 
+// Value marshals the receiver HAProxyClient into a json string.
+func (h HAProxyClient) Value() (string, error) {
+	if data, err := json.Marshal(h); err != nil {
+		return "", err
+	} else {
+		return string(data), err
+	}
+}
+
+// Scan unmarshals the input into the receiver HAProxyClient.
+func (h *HAProxyClient) Scan(input string) error {
+	return json.Unmarshal([]byte(input), h)
+}
+
 func NewHAProxyClientTo(ip, port string) (*HAProxyClient, error) {
 	haproxyCli := new(HAProxyClient)
 	haproxyCli.IP = ip

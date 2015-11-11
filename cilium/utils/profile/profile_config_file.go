@@ -1,6 +1,8 @@
 package profile
 
 import (
+	"encoding/json"
+
 	upsd "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/docker"
 	upsi "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/intent"
 	upsk "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/kubernetes"
@@ -23,6 +25,20 @@ type Policy struct {
 	DockerConfig     upsd.DockerConfig     `json:"docker-config,omitempty" yaml:"docker-config,omitempty"`
 	IntentConfig     upsi.IntentConfig     `json:"intent-config,omitempty" yaml:"intent-config,omitempty"`
 	KubernetesConfig upsk.KubernetesConfig `json:"kubernetes-config,omitempty" yaml:"kubernetes-config,omitempty"`
+}
+
+// Value marshals the receiver Policy into a json string.
+func (p Policy) Value() (string, error) {
+	if data, err := json.Marshal(p); err != nil {
+		return "", err
+	} else {
+		return string(data), nil
+	}
+}
+
+// Scan unmarshals the input into the receiver Policy.
+func (p *Policy) Scan(input string) error {
+	return json.Unmarshal([]byte(input), p)
 }
 
 // FilterPoliciesByUser returns a slice of PolicySource where the Owner value is

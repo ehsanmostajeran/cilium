@@ -47,6 +47,20 @@ type IP struct {
 	IPAddress IPAddress
 }
 
+// Value marshals the receiver IP into a json string.
+func (ip IP) Value() (string, error) {
+	if data, err := json.Marshal(ip); err != nil {
+		return "", err
+	} else {
+		return string(data), err
+	}
+}
+
+// Scan unmarshals the input into the receiver IP.
+func (ip *IP) Scan(input string) error {
+	return json.Unmarshal([]byte(input), ip)
+}
+
 type Links []string
 
 type ContainerLinks struct {
@@ -54,11 +68,39 @@ type ContainerLinks struct {
 	Links     Links  `json:"links,omitempty" yaml:"links,omitempty"`
 }
 
+// Value marshals the receiver ContainerLinks into a json string.
+func (cl ContainerLinks) Value() (string, error) {
+	if data, err := json.Marshal(cl); err != nil {
+		return "", err
+	} else {
+		return string(data), err
+	}
+}
+
+// Scan unmarshals the input into the receiver ContainerLinks.
+func (cl *ContainerLinks) Scan(input string) error {
+	return json.Unmarshal([]byte(input), cl)
+}
+
 type PortBindings map[d.Port][]d.PortBinding
 
 type ContainerPortBindings struct {
 	Container    string       `json:"container,omitempty" yaml:"container,omitempty"`
 	PortBindings PortBindings `json:"port-bindings,omitempty" yaml:"port-bindings,omitempty"`
+}
+
+// Value marshals the receiver ContainerPortBindings into a json string.
+func (cpb ContainerPortBindings) Value() (string, error) {
+	if data, err := json.Marshal(cpb); err != nil {
+		return "", err
+	} else {
+		return string(data), err
+	}
+}
+
+// Scan unmarshals the input into the receiver ContainerPortBindings.
+func (cpb *ContainerPortBindings) Scan(input string) error {
+	return json.Unmarshal([]byte(input), cpb)
 }
 
 type IPs []net.IP
@@ -74,4 +116,18 @@ type Endpoint struct {
 	BD        int    `json:"bd,omitempty" yaml:"bd,omitempty"`
 	Namespace int    `json:"namespace,omitempty" yaml:"namespace,omitempty"`
 	Service   string `json:"service,omitempty" yaml:"service,omitempty"`
+}
+
+// Value marshals the receiver Endpoint into a json string.
+func (e Endpoint) Value() (string, error) {
+	if data, err := json.Marshal(e); err != nil {
+		return "", err
+	} else {
+		return string(data), err
+	}
+}
+
+// Scan unmarshals the input into the receiver Endpoint.
+func (e *Endpoint) Scan(input string) error {
+	return json.Unmarshal([]byte(input), e)
 }

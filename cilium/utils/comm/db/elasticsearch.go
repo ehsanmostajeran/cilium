@@ -1,7 +1,6 @@
 package db
 
 import (
-	"encoding/json"
 	"errors"
 	l "log"
 	"net"
@@ -9,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -32,9 +32,11 @@ const (
 )
 
 var (
-	ec         EConn
-	clientInit sync.Once
-	Indexes    = [...]string{IndexConfig, IndexState}
+	ec          EConn
+	clientInit  sync.Once
+	Indexes     = []string{IndexConfig, IndexState}
+	quotedots   = strings.NewReplacer(`/`, `//`, `.`, `/dot`)
+	unquotedots = strings.NewReplacer(`/dot`, `.`, `//`, `/`)
 )
 
 func InitElasticDb() error {
@@ -45,8 +47,12 @@ func InitElasticDb() error {
 	defer c.Close()
 
 	for _, index := range Indexes {
-		if _, err = c.DeleteIndex(index).Do(); err != nil {
+		if exists, err := c.IndexExists(index).Do(); err != nil {
 			return err
+		} else if exists {
+			if _, err := c.DeleteIndex(index).Do(); err != nil {
+				return err
+			}
 		}
 		if _, err = c.CreateIndex(index).Do(); err != nil {
 			return err
@@ -62,9 +68,12 @@ func ElasticFlushConfig() error {
 		return err
 	}
 	defer c.Close()
-
-	if _, err = c.DeleteIndex(IndexConfig).Do(); err != nil {
+	if exists, err := c.IndexExists(IndexConfig).Do(); err != nil {
 		return err
+	} else if exists {
+		if _, err := c.DeleteIndex(IndexConfig).Do(); err != nil {
+			return err
+		}
 	}
 	if _, err = c.CreateIndex(IndexConfig).Do(); err != nil {
 		return err
@@ -144,12 +153,17 @@ func (c EConn) GetUsers() ([]up.User, error) {
 	if err != nil {
 		return nil, err
 	}
-	var (
-		user  up.User
-		users []up.User
-	)
-	for _, item := range searchResult.Each(reflect.TypeOf(user)) {
+	users := []up.User{}
+	for _, item := range searchResult.Each(reflect.TypeOf(up.User{})) {
 		if u, ok := item.(up.User); ok {
+			uStr, err := u.Value()
+			if err != nil {
+				return nil, err
+			}
+			u = up.User{}
+			if err := u.Scan(unquotedots.Replace(uStr)); err != nil {
+				return nil, err
+			}
 			users = append(users, u)
 		}
 	}
@@ -165,6 +179,14 @@ func (c EConn) GetDNSConfig() (uc.DNSClient, error) {
 	}
 	for _, item := range searchResult.Each(reflect.TypeOf(dnsConfig)) {
 		if dnsConfig, ok := item.(uc.DNSClient); ok {
+			dStr, err := dnsConfig.Value()
+			if err != nil {
+				return dnsConfig, err
+			}
+			dnsConfig = uc.DNSClient{}
+			if err := dnsConfig.Scan(unquotedots.Replace(dStr)); err != nil {
+				return dnsConfig, err
+			}
 			return dnsConfig, nil
 		}
 	}
@@ -176,10 +198,18 @@ func (c EConn) GetHAProxyConfig() (upl.HAProxyClient, error) {
 	var hAProxyClient upl.HAProxyClient
 	searchResult, err := c.Search().Index(IndexConfig).Type(TNHAProxyconfig).Do()
 	if err != nil {
-		return upl.HAProxyClient{}, err
+		return hAProxyClient, err
 	}
 	for _, item := range searchResult.Each(reflect.TypeOf(hAProxyClient)) {
 		if hAProxyClient, ok := item.(upl.HAProxyClient); ok {
+			hStr, err := hAProxyClient.Value()
+			if err != nil {
+				return hAProxyClient, err
+			}
+			hAProxyClient = upl.HAProxyClient{}
+			if err := hAProxyClient.Scan(unquotedots.Replace(hStr)); err != nil {
+				return hAProxyClient, err
+			}
 			return hAProxyClient, nil
 		}
 	}
@@ -194,7 +224,8 @@ func (c EConn) GetDockerLinksOfContainerTemp(containerName string) (up.Container
 		return linksConfig, err
 	}
 	if getResult.Found {
-		if err := json.Unmarshal(*getResult.Source, &linksConfig); err != nil {
+		unquotedSource := unquotedots.Replace(string(*getResult.Source))
+		if err := linksConfig.Scan(unquotedSource); err != nil {
 			return linksConfig, err
 		}
 	}
@@ -209,7 +240,8 @@ func (c EConn) GetDockerLinksOfContainer(containerID string) (up.ContainerLinks,
 		return linksConfig, err
 	}
 	if getResult.Found {
-		if err := json.Unmarshal(*getResult.Source, &linksConfig); err != nil {
+		unquotedSource := unquotedots.Replace(string(*getResult.Source))
+		if err := linksConfig.Scan(unquotedSource); err != nil {
 			return linksConfig, err
 		}
 	}
@@ -224,7 +256,8 @@ func (c EConn) GetEndpoint(containerID string) (up.Endpoint, error) {
 		return ipConfig, err
 	}
 	if getResult.Found {
-		if err := json.Unmarshal(*getResult.Source, &ipConfig); err != nil {
+		unquotedSource := unquotedots.Replace(string(*getResult.Source))
+		if err := ipConfig.Scan(unquotedSource); err != nil {
 			return ipConfig, err
 		}
 	}
@@ -239,7 +272,8 @@ func (c EConn) GetDockerPortBindingsOfContainerTemp(containerID string) (up.Cont
 		return portBindings, err
 	}
 	if getResult.Found {
-		if err := json.Unmarshal(*getResult.Source, &portBindings); err != nil {
+		unquotedSource := unquotedots.Replace(string(*getResult.Source))
+		if err := portBindings.Scan(unquotedSource); err != nil {
 			return portBindings, err
 		}
 	}
@@ -254,7 +288,8 @@ func (c EConn) GetDockerPortBindingsOfContainer(containerID string) (up.Containe
 		return portBindings, err
 	}
 	if getResult.Found {
-		if err := json.Unmarshal(*getResult.Source, &portBindings); err != nil {
+		unquotedSource := unquotedots.Replace(string(*getResult.Source))
+		if err := portBindings.Scan(unquotedSource); err != nil {
 			return portBindings, err
 		}
 	}
@@ -271,7 +306,14 @@ func (c EConn) PutUser(userName string) (bool, error) {
 	userID, isNewUser := up.GetUserID(userName, users)
 	if isNewUser {
 		usr := up.User{ID: userID, Name: userName}
-		if _, err := c.Index().Index(IndexConfig).Type(TNUsers).Refresh(true).Id(url.QueryEscape(strconv.Itoa(userID))).BodyJson(usr).Do(); err != nil {
+		id := url.QueryEscape(strconv.Itoa(userID))
+		usrStr, err := usr.Value()
+		if err != nil {
+			return false, err
+		}
+		usrStr = quotedots.Replace(usrStr)
+		if _, err := c.Index().Index(IndexConfig).Type(TNUsers).Refresh(true).
+			Id(id).BodyString(usrStr).Do(); err != nil {
 			return isNewUser, err
 		}
 	}
@@ -280,8 +322,14 @@ func (c EConn) PutUser(userName string) (bool, error) {
 
 func (c EConn) PutDNSConfig(dnsConfig uc.DNSClient) error {
 	log.Debug("")
-	_, err := c.Index().Index(IndexConfig).Type(TNDNSconfig).Refresh(true).Id(url.QueryEscape(TNDNSconfig)).BodyJson(dnsConfig).Do()
+	id := url.QueryEscape(TNDNSconfig)
+	dnsConfigStr, err := dnsConfig.Value()
 	if err != nil {
+		return err
+	}
+	dnsConfigStr = quotedots.Replace(dnsConfigStr)
+	if _, err := c.Index().Index(IndexConfig).Type(TNDNSconfig).Refresh(true).
+		Id(id).BodyString(dnsConfigStr).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -289,8 +337,14 @@ func (c EConn) PutDNSConfig(dnsConfig uc.DNSClient) error {
 
 func (c EConn) PutHAProxyConfig(haProxyClient upl.HAProxyClient) error {
 	log.Debug("")
-	_, err := c.Index().Index(IndexConfig).Type(TNHAProxyconfig).Refresh(true).Id(url.QueryEscape(TNHAProxyconfig)).BodyJson(haProxyClient).Do()
+	id := url.QueryEscape(TNHAProxyconfig)
+	haProxyClientStr, err := haProxyClient.Value()
 	if err != nil {
+		return err
+	}
+	haProxyClientStr = quotedots.Replace(haProxyClientStr)
+	if _, err := c.Index().Index(IndexConfig).Type(TNHAProxyconfig).Refresh(true).
+		Id(id).BodyString(haProxyClientStr).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -298,8 +352,14 @@ func (c EConn) PutHAProxyConfig(haProxyClient upl.HAProxyClient) error {
 
 func (c EConn) PutDockerLinksOfContainer(containerLinks up.ContainerLinks) error {
 	log.Debug("")
-	_, err := c.Index().Index(IndexState).Type(TNLinksConfig).Refresh(true).Id(url.QueryEscape(containerLinks.Container)).BodyJson(containerLinks).Do()
+	id := url.QueryEscape(containerLinks.Container)
+	containerLinksStr, err := containerLinks.Value()
 	if err != nil {
+		return err
+	}
+	containerLinksStr = quotedots.Replace(containerLinksStr)
+	if _, err := c.Index().Index(IndexState).Type(TNLinksConfig).Refresh(true).
+		Id(id).BodyString(containerLinksStr).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -307,8 +367,14 @@ func (c EConn) PutDockerLinksOfContainer(containerLinks up.ContainerLinks) error
 
 func (c EConn) PutDockerLinksOfContainerTemp(containerLinks up.ContainerLinks) error {
 	log.Debug("")
-	_, err := c.Index().Index(IndexState).Type(TNLinksConfigTemp).Refresh(true).Id(url.QueryEscape(containerLinks.Container)).BodyJson(containerLinks).Do()
+	id := url.QueryEscape(containerLinks.Container)
+	containerLinksStr, err := containerLinks.Value()
 	if err != nil {
+		return err
+	}
+	containerLinksStr = quotedots.Replace(containerLinksStr)
+	if _, err := c.Index().Index(IndexState).Type(TNLinksConfigTemp).Refresh(true).
+		Id(id).BodyString(containerLinksStr).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -316,8 +382,14 @@ func (c EConn) PutDockerLinksOfContainerTemp(containerLinks up.ContainerLinks) e
 
 func (c EConn) PutDockerPortBindingsOfContainerTemp(portBindings up.ContainerPortBindings) error {
 	log.Debug("")
-	_, err := c.Index().Index(IndexState).Type(TNPortBindingsConfigTemp).Refresh(true).Id(url.QueryEscape(portBindings.Container)).BodyJson(portBindings).Do()
+	id := url.QueryEscape(portBindings.Container)
+	portBindingsStr, err := portBindings.Value()
 	if err != nil {
+		return err
+	}
+	portBindingsStr = quotedots.Replace(portBindingsStr)
+	if _, err := c.Index().Index(IndexState).Type(TNPortBindingsConfigTemp).Refresh(true).
+		Id(id).BodyString(portBindingsStr).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -325,8 +397,14 @@ func (c EConn) PutDockerPortBindingsOfContainerTemp(portBindings up.ContainerPor
 
 func (c EConn) PutDockerPortBindingsOfContainer(portBindings up.ContainerPortBindings) error {
 	log.Debug("")
-	_, err := c.Index().Index(IndexState).Type(TNPortBindingsConfig).Refresh(true).Id(url.QueryEscape(portBindings.Container)).BodyJson(portBindings).Do()
+	id := url.QueryEscape(portBindings.Container)
+	portBindingsStr, err := portBindings.Value()
 	if err != nil {
+		return err
+	}
+	portBindingsStr = quotedots.Replace(portBindingsStr)
+	if _, err := c.Index().Index(IndexState).Type(TNPortBindingsConfig).Refresh(true).
+		Id(id).BodyJson(portBindingsStr).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -336,7 +414,14 @@ func (c EConn) PutIP(ip net.IP) error {
 	log.Debug("")
 	dbIP := up.IP{IPAddress: up.IPAddress(ip)}
 	log.Debug("ipStr %+v", ip.String())
-	result, err := c.Index().Index(IndexState).Type(TNIPsinUse).Refresh(true).Id(url.QueryEscape(url.QueryEscape(ip.String()))).BodyJson(dbIP).Do()
+	id := url.QueryEscape(url.QueryEscape(ip.String()))
+	dbIPStr, err := dbIP.Value()
+	if err != nil {
+		return err
+	}
+	dbIPStr = quotedots.Replace(dbIPStr)
+	result, err := c.Index().Index(IndexState).Type(TNIPsinUse).Refresh(true).
+		Id(id).BodyString(dbIPStr).Do()
 	if err != nil {
 		return err
 	}
@@ -348,8 +433,9 @@ func (c EConn) PutIP(ip net.IP) error {
 
 func (c EConn) DeleteIP(ip net.IP) error {
 	log.Debug("ipStr %+v", ip.String())
-	_, err := c.Delete().Index(IndexState).Type(TNIPsinUse).Refresh(true).Id(url.QueryEscape(url.QueryEscape(ip.String()))).Do()
-	if err != nil {
+	id := url.QueryEscape(url.QueryEscape(ip.String()))
+	if _, err := c.Delete().Index(IndexState).Type(TNIPsinUse).Refresh(true).
+		Id(id).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -357,8 +443,14 @@ func (c EConn) DeleteIP(ip net.IP) error {
 
 func (c EConn) PutEndpoint(endpoint up.Endpoint) error {
 	log.Debug("Endpoint %+v\n", endpoint)
-	_, err := c.Index().Index(IndexState).Type(TNEndpoint).Refresh(true).Id(url.QueryEscape(endpoint.Container)).BodyJson(endpoint).Do()
+	id := url.QueryEscape(endpoint.Container)
+	endpointStr, err := endpoint.Value()
 	if err != nil {
+		return err
+	}
+	endpointStr = quotedots.Replace(endpointStr)
+	if _, err := c.Index().Index(IndexState).Type(TNEndpoint).Refresh(true).
+		Id(id).BodyJson(endpointStr).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -366,8 +458,9 @@ func (c EConn) PutEndpoint(endpoint up.Endpoint) error {
 
 func (c EConn) DeleteEndpoint(containerID string) error {
 	log.Debug("containerID %+v\n", containerID)
-	_, err := c.Delete().Index(IndexState).Type(TNEndpoint).Refresh(true).Id(url.QueryEscape(containerID)).Do()
-	if err != nil {
+	id := url.QueryEscape(containerID)
+	if _, err := c.Delete().Index(IndexState).Type(TNEndpoint).Refresh(true).
+		Id(id).Do(); err != nil {
 		return err
 	}
 	return nil
@@ -383,9 +476,9 @@ func (c EConn) GetPoliciesThatCovers(labels map[string]string) ([]up.PolicySourc
 	if searchResult.Hits != nil {
 		for _, hit := range searchResult.Hits.Hits {
 			var dbPolicy up.Policy
-			if json.Unmarshal(*hit.Source, &dbPolicy) != nil {
-				log.Error("Error while trying to unmarshal from a stored policy: '%+v' skipping this one...", err)
-				continue
+			unquotedHit := unquotedots.Replace(string(*hit.Source))
+			if err := dbPolicy.Scan(unquotedHit); err != nil {
+				return nil, err
 			}
 			if dbPolicy.Coverage.Covers(labels) {
 				owner := dbPolicy.Owner
@@ -412,8 +505,14 @@ func (c EConn) PutPolicy(policies up.PolicySource) error {
 		// ObjectReference and on BodyObj, for Kubernetes policies, we
 		// automatically do that for them.
 		policy.KubernetesConfig.ConvertBodyObjTo(&policy.KubernetesConfig.ObjectReference)
-		_, err := c.Index().Index(IndexConfig).Type(TNPolicySource).Refresh(true).Id(url.QueryEscape(policy.Name)).BodyJson(policy).Do()
+		id := url.QueryEscape(policy.Name)
+		policyStr, err := policy.Value()
 		if err != nil {
+			return err
+		}
+		policyStr = quotedots.Replace(policyStr)
+		if _, err := c.Index().Index(IndexConfig).Type(TNPolicySource).Refresh(true).
+			Id(id).BodyString(policyStr).Do(); err != nil {
 			return err
 		}
 	}

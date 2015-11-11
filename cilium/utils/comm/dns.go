@@ -16,6 +16,20 @@ type DNSClient struct {
 	Port string `json:"port,omitempty" yaml:"port,omitempty"`
 }
 
+// Value marshals the receiver DNSClient into a json string.
+func (d DNSClient) Value() (string, error) {
+	if data, err := json.Marshal(d); err != nil {
+		return "", err
+	} else {
+		return string(data), err
+	}
+}
+
+// Scan unmarshals the input into the receiver DNSClient.
+func (d *DNSClient) Scan(input string) error {
+	return json.Unmarshal([]byte(input), d)
+}
+
 func NewDNSClientToIP(ip string) DNSClient {
 	return DNSClient{IP: ip, Port: defaultPort}
 }

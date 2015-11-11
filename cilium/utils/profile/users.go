@@ -1,12 +1,27 @@
 package profile
 
 import (
+	"encoding/json"
 	"sort"
 )
 
 type User struct {
 	ID   int
 	Name string
+}
+
+// Value marshals the receiver User into a json string.
+func (u User) Value() (string, error) {
+	if data, err := json.Marshal(u); err != nil {
+		return "", err
+	} else {
+		return string(data), err
+	}
+}
+
+// Scan unmarshals the input into the receiver User.
+func (u *User) Scan(input string) error {
+	return json.Unmarshal([]byte(input), u)
 }
 
 // GetUserID returns the user ID of the given username from the slice of users.

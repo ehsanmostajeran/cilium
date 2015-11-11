@@ -57,6 +57,22 @@ docker run -d --name cilium-consul \
     -p $IP:8400:8400 \
     -p $IP:8500:8500 \
     progrium/consul -server -advertise $IP -bootstrap-expect 1
+
+# Local elasticsearch instance
+docker run \
+	-d -p 9200:9200 -p 9300:9300 \
+	--name "cilium-elastic" \
+	--net "host" \
+	-l "com.intent.service=gov_db" \
+	-l "com.intent.logical-name=cilium-elastic" \
+	-e ES_HEAP_SIZE=4g \
+	elasticsearch:2.0.0 \
+	elasticsearch \
+		-Des.cluster.name="cilium-elastic" \
+		-Des.network.bind_host=$IP \
+		-Des.transport.publish_host=$IP \
+		-Des.http.publish_host=$IP
+
 MASTER_IP=$IP
 else
 docker run -d --name cilium-consul \
@@ -69,7 +85,6 @@ docker run -d --name cilium-consul \
     -p $IP:8400:8400 \
     -p $IP:8500:8500 \
     progrium/consul -server -advertise $IP -join $MASTER_IP
-fi
 
 # Local elasticsearch instance
 docker run \
@@ -78,20 +93,28 @@ docker run \
 	--net "host" \
 	-l "com.intent.service=gov_db" \
 	-l "com.intent.logical-name=cilium-elastic" \
-	elasticsearch:1.7.1 \
+ 	-e ES_HEAP_SIZE=3g \
+ 	elasticsearch:2.0.0 \
 	elasticsearch \
 		-Des.cluster.name="cilium-elastic" \
-		-Des.multicast.enabled=true \
+		-Des.network.bind_host=$IP \
 		-Des.transport.publish_host=$IP \
 		-Des.http.publish_host=$IP \
-		-Des.discovery.zen.ping.multicast.address=$IP
+		-Des.discovery.zen.ping.unicast.hosts=$MASTER_IP
+fi
 
-docker cp $dir/../external-deps/marvel-latest.zip cilium-elastic:/tmp
 
+docker cp $dir/../external-deps/license-2.0.0.zip cilium-elastic:/tmp
 docker exec \
 	cilium-elastic \
-	/usr/share/elasticsearch/bin/plugin -i elasticsearch/marvel/latest \
-	--url file:///tmp/marvel-latest.zip
+	/usr/share/elasticsearch/bin/plugin install \
+	file:///tmp/license-2.0.0.zip
+
+docker cp $dir/../external-deps/marvel-agent-2.0.0.zip cilium-elastic:/tmp
+docker exec \
+	cilium-elastic \
+	/usr/share/elasticsearch/bin/plugin install \
+	file:///tmp/marvel-agent-2.0.0.zip
 
 docker restart cilium-elastic
 
@@ -232,7 +255,7 @@ docker run \
         -v /var/run/docker.sock:/var/run/docker.sock \
         -v $statisConfigDir:/docker-collector/configs \
         cilium/docker-collector:latest \
-	-f '(k8s_.*)|(cilium.*)' \
+        -f '(k8s_.*)|(cilium.*)' \
         -i 'cilium-docker-collector' \
         -l debug
 

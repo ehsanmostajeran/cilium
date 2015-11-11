@@ -75,8 +75,8 @@ func (i Intent) Value() (string, error) {
 }
 
 // Scan unmarshals the input into the receiver Intent.
-func (i *Intent) Scan(input interface{}) error {
-	return json.Unmarshal([]byte(input.(string)), i)
+func (i *Intent) Scan(input string) error {
+	return json.Unmarshal([]byte(input), i)
 }
 
 type HostNameType struct {
