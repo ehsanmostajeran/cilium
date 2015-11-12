@@ -197,12 +197,20 @@ store_policy(){
 }
 
 start_kibana(){
+    tmp_dir=$(mktemp -d)
+    scripts_tmp="$tmp_dir/scripts"
+    backend_tmp="$tmp_dir/backend"
+    external_deps_temp="$tmp_dir/external-deps"
+    curl -Ssl -o "$external_deps_temp/marvel-2.0.0.tar.gz" "$address/external-deps/marvel-2.0.0.tar.gz"
     echo "Starting Kibana..."
     docker run \
         --name cilium-kibana \
         -e ELASTICSEARCH_URL=http://$IP:9200 \
         -p 5601:5601 \
-        -d kibana:4.1.1
+        -d kibana:4.2.0
+    docker cp "$external_deps_temp/marvel-2.0.0.tar.gz" cilium-kibana:/tmp
+    docker exec -ti cilium-kibana kibana plugin --install marvel --url file:///tmp/marvel-2.0.0.tar.gz
+    docker restart cilium-kibana
 }
 
 entry(){
