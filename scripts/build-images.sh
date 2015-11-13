@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
-dir=`dirname $0`
+dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
+
+cd "${dir}/.."
 
 docker_images=(\
 "cilium-powerstrip-latest.ditar" \
@@ -49,7 +51,8 @@ for ((i=0; i<"${#docker_images[@]}"; i+=2)); do
     chown $(whoami) "./images/${docker_images["$((i))"]}"
 done
 
-$dir/build-cilium-image.sh
+"${dir}/build-cilium-image.sh"
 
 echo "Images successfully saved"
 
+exit 0

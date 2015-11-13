@@ -1,19 +1,24 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
-dir=`dirname $0`
+dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-cd $dir/../
+image_tag="cilium:latest"
+
+cd "${dir}/.."
+
 mkdir -p ./cilium-dev
 
 cp Dockerfile.dev ./cilium-dev/Dockerfile
 cp cilium-Linux-x86_64 ./cilium-dev/
 cp -r backend ./cilium-dev/backend
 
-cd "./cilium-dev"
+cd ./cilium-dev
 
-docker build -t cilium/cilium .
+docker build -t "cilium/${image_tag}" .
 
-cd ../
+cd ..
 rm -fr ./cilium-dev
 
 echo "Cilium development image successfully created"
+
+exit 0

@@ -1,17 +1,33 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
+set -e
 dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-if [ -z $ELASTIC_IP ]; then
-    ELASTIC_IP=192.168.50.1
+marvel="marvel-2.0.0.tar.gz"
+kibana_tag="4.2.0"
+
+cd "${dir}/.."
+
+if [ -z ${ELASTIC_IP} ]; then
+    ELASTIC_IP="192.168.50.1"
 fi
 
 docker run \
-    --name cilium-kibana \
-    -e ELASTICSEARCH_URL=http://${ELASTIC_IP}:9200 \
-    -p 5601:5601 \
-    -d kibana:4.2.0
+       --name "cilium-kibana" \
+       -e ELASTICSEARCH_URL="http://${ELASTIC_IP}:9200" \
+       -p 5601:5601 \
+       -d \
+       "kibana:${kibana_tag}"
 
-docker cp $dir/../external-deps/marvel-2.0.0.tar.gz cilium-kibana:/tmp
-docker exec -ti cilium-kibana kibana plugin --install marvel --url file:///tmp/marvel-2.0.0.tar.gz
-docker restart cilium-kibana
+docker cp \
+       "./external-deps/${marvel}" \
+       cilium-kibana:/tmp
+
+docker exec \
+       -ti \
+       cilium-kibana \
+       kibana plugin --install marvel --url "file:///tmp/${marvel}"
+
+docker restart \
+       cilium-kibana
+
+exit 0

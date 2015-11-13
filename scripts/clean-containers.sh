@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-CONT=$(docker ps -aq --filter name=cilium)
-[ "$CONT" ] && {
-	docker rm -f $CONT
+cont=( $(docker ps -aq --filter name=cilium) )
+[ "${cont}" ] && {
+    docker rm -f "${cont[@]}"
 }
 
 exit 0

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 echo "build-images              Pulls and creates all necessary docker images"
 echo "                          used by a cilium node inside 'images/'"
@@ -58,3 +58,5 @@ echo "tests                     Performs cilium's unit tests."
 echo ""
 echo "update-godeps             Useful to update all Godeps inside the 'Godeps'"
 echo "                          directory."
+
+exit 0

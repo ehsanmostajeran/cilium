@@ -1,9 +1,14 @@
-#!/bin/bash
-
+#!/usr/bin/env bash
 set -e
-dir=`dirname $0`
+dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-for IMAGE in $dir/../images/*.ditar; do
-	echo "Importing ${IMAGE}..."
-	docker load -i "$IMAGE"
+cd "${dir}/.."
+
+for image in ./images/*.ditar; do
+    echo "Importing ${image}..."
+    docker load -i "${image}"
 done
+
+echo "All images successfully imported"
+
+exit 0
