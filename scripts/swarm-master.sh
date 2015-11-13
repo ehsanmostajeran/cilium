@@ -19,8 +19,15 @@ swarm-master() {
         export DOCKER_HOST="$(echo "${primary}" | grep -oE "${ip_regex}"):2375"
     fi
 
-    >&2 echo "Using DOCKER_HOST=${DOCKER_HOST}"
-    >&2 echo ""
+    if [ "${1}" == "-q" ]; then
+        shift
+        quiet=true
+    fi
+
+    if [ -z "${quiet}" ]; then
+        >&2 echo "Using DOCKER_HOST=${DOCKER_HOST}"
+        >&2 echo ""
+    fi
 
     ${@}
 

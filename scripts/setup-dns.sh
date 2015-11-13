@@ -2,7 +2,7 @@
 
 >&2 echo "Setting up DNS..."
 
-swarm-master docker run \
+swarm-master -q docker run \
 	     --name "cilium-dns" \
 	     -d \
 	     -p 80:80 -p 53:53/udp \
