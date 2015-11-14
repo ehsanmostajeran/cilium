@@ -35,7 +35,7 @@ gcr.io/google_containers/etcd:2.0.13 \
 gcr.io/google_containers/hyperkube:v1.0.7 \
 "flannel.ditar" \
 quay.io/coreos/flannel:0.5.3 \
-"gb-redisslave.ditar"
+"gb-redisslave.ditar" \
 gcr.io/google_samples/gb-redisslave:v1 \
 )
 
