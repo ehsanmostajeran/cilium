@@ -54,7 +54,7 @@ var pdPartitionErrorMsg string = intervalErrorMsg(0, 255)
 var portRangeErrorMsg string = intervalErrorMsg(0, 65536)
 var portNameErrorMsg string = fmt.Sprintf(`must be an IANA_SVC_NAME (at most 15 characters, matching regex %s, it must contain at least one letter [a-z], and hyphens cannot be adjacent to other hyphens): e.g. "http"`, validation.IdentifierNoHyphensBeginEndFmt)
 
-const totalAnnotationSizeLimitB int = 64 * (1 << 10) // 64 kB
+const totalAnnotationSizeLimitB int = 256 * (1 << 10) // 256 kB
 
 func ValidateLabelName(labelName, fieldName string) errs.ValidationErrorList {
 	allErrs := errs.ValidationErrorList{}
@@ -379,6 +379,10 @@ func validateSource(source *api.VolumeSource) errs.ValidationErrorList {
 		numVolumes++
 		allErrs = append(allErrs, validateGlusterfs(source.Glusterfs).Prefix("glusterfs")...)
 	}
+	if source.Flocker != nil {
+		numVolumes++
+		allErrs = append(allErrs, validateFlocker(source.Flocker).Prefix("flocker")...)
+	}
 	if source.PersistentVolumeClaim != nil {
 		numVolumes++
 		allErrs = append(allErrs, validatePersistentClaimVolumeSource(source.PersistentVolumeClaim).Prefix("persistentVolumeClaim")...)
@@ -531,6 +535,17 @@ func validateGlusterfs(glusterfs *api.GlusterfsVolumeSource) errs.ValidationErro
 	return allErrs
 }
 
+func validateFlocker(flocker *api.FlockerVolumeSource) errs.ValidationErrorList {
+	allErrs := errs.ValidationErrorList{}
+	if flocker.DatasetName == "" {
+		allErrs = append(allErrs, errs.NewFieldRequired("datasetName"))
+	}
+	if strings.Contains(flocker.DatasetName, "/") {
+		allErrs = append(allErrs, errs.NewFieldInvalid("datasetName", flocker.DatasetName, "must not contain '/'"))
+	}
+	return allErrs
+}
+
 var validDownwardAPIFieldPathExpressions = sets.NewString("metadata.name", "metadata.namespace", "metadata.labels", "metadata.annotations")
 
 func validateDownwardAPIVolumeSource(downwardAPIVolume *api.DownwardAPIVolumeSource) errs.ValidationErrorList {
@@ -635,6 +650,10 @@ func ValidatePersistentVolume(pv *api.PersistentVolume) errs.ValidationErrorList
 	if pv.Spec.Glusterfs != nil {
 		numVolumes++
 		allErrs = append(allErrs, validateGlusterfs(pv.Spec.Glusterfs).Prefix("glusterfs")...)
+	}
+	if pv.Spec.Flocker != nil {
+		numVolumes++
+		allErrs = append(allErrs, validateFlocker(pv.Spec.Flocker).Prefix("flocker")...)
 	}
 	if pv.Spec.NFS != nil {
 		numVolumes++
@@ -1322,6 +1341,15 @@ func ValidateReplicationControllerUpdate(oldController, controller *api.Replicat
 	return allErrs
 }
 
+// ValidateReplicationControllerStatusUpdate tests if required fields in the replication controller are set.
+func ValidateReplicationControllerStatusUpdate(oldController, controller *api.ReplicationController) errs.ValidationErrorList {
+	allErrs := errs.ValidationErrorList{}
+	allErrs = append(allErrs, ValidateObjectMetaUpdate(&controller.ObjectMeta, &oldController.ObjectMeta).Prefix("metadata")...)
+	allErrs = append(allErrs, ValidatePositiveField(int64(controller.Status.Replicas), "status.replicas")...)
+	allErrs = append(allErrs, ValidatePositiveField(int64(controller.Status.ObservedGeneration), "status.observedGeneration")...)
+	return allErrs
+}
+
 // Validates that the given selector is non-empty.
 func ValidateNonEmptySelector(selectorMap map[string]string, fieldName string) errs.ValidationErrorList {
 	allErrs := errs.ValidationErrorList{}
@@ -1951,6 +1979,27 @@ func ValidatePodLogOptions(opts *api.PodLogOptions) errs.ValidationErrorList {
 	case opts.SinceSeconds != nil:
 		if *opts.SinceSeconds < 1 {
 			allErrs = append(allErrs, errs.NewFieldInvalid("sinceSeconds", *opts.SinceSeconds, "sinceSeconds must be a positive integer"))
+		}
+	}
+	return allErrs
+}
+
+// ValidateLoadBalancerStatus validates required fields on a LoadBalancerStatus
+func ValidateLoadBalancerStatus(status *api.LoadBalancerStatus) errs.ValidationErrorList {
+	allErrs := errs.ValidationErrorList{}
+	for _, ingress := range status.Ingress {
+		if len(ingress.IP) > 0 {
+			if isIP := (net.ParseIP(ingress.IP) != nil); !isIP {
+				allErrs = append(allErrs, errs.NewFieldInvalid("ingress.ip", ingress.IP, "must be an IP address"))
+			}
+		}
+		if len(ingress.Hostname) > 0 {
+			if valid, errMsg := NameIsDNSSubdomain(ingress.Hostname, false); !valid {
+				allErrs = append(allErrs, errs.NewFieldInvalid("ingress.hostname", ingress.Hostname, errMsg))
+			}
+			if isIP := (net.ParseIP(ingress.Hostname) != nil); isIP {
+				allErrs = append(allErrs, errs.NewFieldInvalid("ingress.hostname", ingress.Hostname, "must be a DNS name, not ip address"))
+			}
 		}
 	}
 	return allErrs

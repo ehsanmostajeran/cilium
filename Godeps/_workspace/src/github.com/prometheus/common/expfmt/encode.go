@@ -18,9 +18,9 @@ import (
 	"io"
 	"net/http"
 
-	"github.com/cilium-team/cilium/Godeps/_workspace/src/bitbucket.org/ww/goautoneg"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/golang/protobuf/proto"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/matttproud/golang_protobuf_extensions/pbutil"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg"
 
 	dto "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/prometheus/client_model/go"
 )

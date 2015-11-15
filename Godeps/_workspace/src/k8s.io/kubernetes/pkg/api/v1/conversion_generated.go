@@ -292,6 +292,7 @@ func autoconvert_api_Container_To_v1_Container(in *api.Container, out *Container
 		out.SecurityContext = nil
 	}
 	out.Stdin = in.Stdin
+	out.StdinOnce = in.StdinOnce
 	out.TTY = in.TTY
 	return nil
 }
@@ -788,6 +789,18 @@ func autoconvert_api_FCVolumeSource_To_v1_FCVolumeSource(in *api.FCVolumeSource,
 
 func convert_api_FCVolumeSource_To_v1_FCVolumeSource(in *api.FCVolumeSource, out *FCVolumeSource, s conversion.Scope) error {
 	return autoconvert_api_FCVolumeSource_To_v1_FCVolumeSource(in, out, s)
+}
+
+func autoconvert_api_FlockerVolumeSource_To_v1_FlockerVolumeSource(in *api.FlockerVolumeSource, out *FlockerVolumeSource, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*api.FlockerVolumeSource))(in)
+	}
+	out.DatasetName = in.DatasetName
+	return nil
+}
+
+func convert_api_FlockerVolumeSource_To_v1_FlockerVolumeSource(in *api.FlockerVolumeSource, out *FlockerVolumeSource, s conversion.Scope) error {
+	return autoconvert_api_FlockerVolumeSource_To_v1_FlockerVolumeSource(in, out, s)
 }
 
 func autoconvert_api_GCEPersistentDiskVolumeSource_To_v1_GCEPersistentDiskVolumeSource(in *api.GCEPersistentDiskVolumeSource, out *GCEPersistentDiskVolumeSource, s conversion.Scope) error {
@@ -1777,6 +1790,14 @@ func autoconvert_api_PersistentVolumeSource_To_v1_PersistentVolumeSource(in *api
 	} else {
 		out.FC = nil
 	}
+	if in.Flocker != nil {
+		out.Flocker = new(FlockerVolumeSource)
+		if err := convert_api_FlockerVolumeSource_To_v1_FlockerVolumeSource(in.Flocker, out.Flocker, s); err != nil {
+			return err
+		}
+	} else {
+		out.Flocker = nil
+	}
 	return nil
 }
 
@@ -1858,10 +1879,6 @@ func autoconvert_api_Pod_To_v1_Pod(in *api.Pod, out *Pod, s conversion.Scope) er
 		return err
 	}
 	return nil
-}
-
-func convert_api_Pod_To_v1_Pod(in *api.Pod, out *Pod, s conversion.Scope) error {
-	return autoconvert_api_Pod_To_v1_Pod(in, out, s)
 }
 
 func autoconvert_api_PodAttachOptions_To_v1_PodAttachOptions(in *api.PodAttachOptions, out *PodAttachOptions, s conversion.Scope) error {
@@ -2984,6 +3001,14 @@ func autoconvert_api_VolumeSource_To_v1_VolumeSource(in *api.VolumeSource, out *
 	} else {
 		out.CephFS = nil
 	}
+	if in.Flocker != nil {
+		out.Flocker = new(FlockerVolumeSource)
+		if err := convert_api_FlockerVolumeSource_To_v1_FlockerVolumeSource(in.Flocker, out.Flocker, s); err != nil {
+			return err
+		}
+	} else {
+		out.Flocker = nil
+	}
 	if in.DownwardAPI != nil {
 		out.DownwardAPI = new(DownwardAPIVolumeSource)
 		if err := convert_api_DownwardAPIVolumeSource_To_v1_DownwardAPIVolumeSource(in.DownwardAPI, out.DownwardAPI, s); err != nil {
@@ -3273,6 +3298,7 @@ func autoconvert_v1_Container_To_api_Container(in *Container, out *api.Container
 		out.SecurityContext = nil
 	}
 	out.Stdin = in.Stdin
+	out.StdinOnce = in.StdinOnce
 	out.TTY = in.TTY
 	return nil
 }
@@ -3769,6 +3795,18 @@ func autoconvert_v1_FCVolumeSource_To_api_FCVolumeSource(in *FCVolumeSource, out
 
 func convert_v1_FCVolumeSource_To_api_FCVolumeSource(in *FCVolumeSource, out *api.FCVolumeSource, s conversion.Scope) error {
 	return autoconvert_v1_FCVolumeSource_To_api_FCVolumeSource(in, out, s)
+}
+
+func autoconvert_v1_FlockerVolumeSource_To_api_FlockerVolumeSource(in *FlockerVolumeSource, out *api.FlockerVolumeSource, s conversion.Scope) error {
+	if defaulting, found := s.DefaultingInterface(reflect.TypeOf(*in)); found {
+		defaulting.(func(*FlockerVolumeSource))(in)
+	}
+	out.DatasetName = in.DatasetName
+	return nil
+}
+
+func convert_v1_FlockerVolumeSource_To_api_FlockerVolumeSource(in *FlockerVolumeSource, out *api.FlockerVolumeSource, s conversion.Scope) error {
+	return autoconvert_v1_FlockerVolumeSource_To_api_FlockerVolumeSource(in, out, s)
 }
 
 func autoconvert_v1_GCEPersistentDiskVolumeSource_To_api_GCEPersistentDiskVolumeSource(in *GCEPersistentDiskVolumeSource, out *api.GCEPersistentDiskVolumeSource, s conversion.Scope) error {
@@ -4758,6 +4796,14 @@ func autoconvert_v1_PersistentVolumeSource_To_api_PersistentVolumeSource(in *Per
 	} else {
 		out.FC = nil
 	}
+	if in.Flocker != nil {
+		out.Flocker = new(api.FlockerVolumeSource)
+		if err := convert_v1_FlockerVolumeSource_To_api_FlockerVolumeSource(in.Flocker, out.Flocker, s); err != nil {
+			return err
+		}
+	} else {
+		out.Flocker = nil
+	}
 	return nil
 }
 
@@ -4839,10 +4885,6 @@ func autoconvert_v1_Pod_To_api_Pod(in *Pod, out *api.Pod, s conversion.Scope) er
 		return err
 	}
 	return nil
-}
-
-func convert_v1_Pod_To_api_Pod(in *Pod, out *api.Pod, s conversion.Scope) error {
-	return autoconvert_v1_Pod_To_api_Pod(in, out, s)
 }
 
 func autoconvert_v1_PodAttachOptions_To_api_PodAttachOptions(in *PodAttachOptions, out *api.PodAttachOptions, s conversion.Scope) error {
@@ -5965,6 +6007,14 @@ func autoconvert_v1_VolumeSource_To_api_VolumeSource(in *VolumeSource, out *api.
 	} else {
 		out.CephFS = nil
 	}
+	if in.Flocker != nil {
+		out.Flocker = new(api.FlockerVolumeSource)
+		if err := convert_v1_FlockerVolumeSource_To_api_FlockerVolumeSource(in.Flocker, out.Flocker, s); err != nil {
+			return err
+		}
+	} else {
+		out.Flocker = nil
+	}
 	if in.DownwardAPI != nil {
 		out.DownwardAPI = new(api.DownwardAPIVolumeSource)
 		if err := convert_v1_DownwardAPIVolumeSource_To_api_DownwardAPIVolumeSource(in.DownwardAPI, out.DownwardAPI, s); err != nil {
@@ -6022,6 +6072,7 @@ func init() {
 		autoconvert_api_Event_To_v1_Event,
 		autoconvert_api_ExecAction_To_v1_ExecAction,
 		autoconvert_api_FCVolumeSource_To_v1_FCVolumeSource,
+		autoconvert_api_FlockerVolumeSource_To_v1_FlockerVolumeSource,
 		autoconvert_api_GCEPersistentDiskVolumeSource_To_v1_GCEPersistentDiskVolumeSource,
 		autoconvert_api_GitRepoVolumeSource_To_v1_GitRepoVolumeSource,
 		autoconvert_api_GlusterfsVolumeSource_To_v1_GlusterfsVolumeSource,
@@ -6139,6 +6190,7 @@ func init() {
 		autoconvert_v1_Event_To_api_Event,
 		autoconvert_v1_ExecAction_To_api_ExecAction,
 		autoconvert_v1_FCVolumeSource_To_api_FCVolumeSource,
+		autoconvert_v1_FlockerVolumeSource_To_api_FlockerVolumeSource,
 		autoconvert_v1_GCEPersistentDiskVolumeSource_To_api_GCEPersistentDiskVolumeSource,
 		autoconvert_v1_GitRepoVolumeSource_To_api_GitRepoVolumeSource,
 		autoconvert_v1_GlusterfsVolumeSource_To_api_GlusterfsVolumeSource,
