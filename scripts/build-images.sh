@@ -4,6 +4,8 @@ dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 cd "${dir}/.."
 
+mkdir -p ./images
+
 docker_images=(\
 "cilium-powerstrip-latest.ditar" \
 cilium/powerstrip:latest \
