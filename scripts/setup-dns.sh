@@ -9,4 +9,6 @@ swarm-master -q docker run \
 	     -l "com.intent.service=svc_dns" \
 	     cilium/docker-dns-rest:1.0-rr-with-del
 
+sleep 3s
+
 exit 0

@@ -14,7 +14,7 @@ do
         break
     else
         swarm-master -q docker restart "${dnsID}"
-        sleep 1
+        sleep 3
     fi
 done
 
