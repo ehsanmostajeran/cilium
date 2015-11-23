@@ -74,30 +74,13 @@ start_elasticsearch() {
            -l "com.intent.service=gov_db" \
            -l "com.intent.logical-name=cilium-elastic" \
            -e ES_HEAP_SIZE=3g \
-           elasticsearch:2.0.0 \
+           cilium/elasticsearch:experimental \
            elasticsearch \
            -Des.cluster.name="cilium-elastic" \
+           -Des.default.path.conf="/usr/share/elasticsearch/config" \
            -Des.network.bind_host="${IP}" \
            -Des.transport.publish_host="${IP}" \
            -Des.http.publish_host="${IP}" "${@}"
-
-    docker cp \
-           "${dir}/../external-deps/license-2.0.0.zip" cilium-elastic:/tmp
-
-    docker exec \
-           cilium-elastic \
-           /usr/share/elasticsearch/bin/plugin install \
-           file:///tmp/license-2.0.0.zip
-
-    docker cp \
-           "${dir}/../external-deps/marvel-agent-2.0.0.zip" cilium-elastic:/tmp
-
-    docker exec \
-           cilium-elastic \
-           /usr/share/elasticsearch/bin/plugin install \
-           file:///tmp/marvel-agent-2.0.0.zip
-
-    docker restart cilium-elastic
 }
 
 # Local cilium instance

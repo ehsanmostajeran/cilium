@@ -76,6 +76,8 @@ func postHookDockerDaemonStart(dbConn ucdb.Db, intent *upsi.Intent, containerCon
 	//Update configurations for special containers
 	saveCiliumServices(dbConn, containerConfig.Labels)
 
+	log.Info("container successfully configured: %+v", containerConfig.ID)
+
 	return nil
 }
 
