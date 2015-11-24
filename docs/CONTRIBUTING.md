@@ -18,7 +18,7 @@ How does it work
 
 The following image represents the cilium's node architecture:
 
-![cilium-architecture](./node-architecture.png)
+![cilium-docker-architecture](./node-architecture-docker.png)
 
 1. A docker request (run hello-world above) goes to __powerstrip-pre-swarm__ which
 takes care of all pre-hook requests and delivers them to __cilium__ so it can
