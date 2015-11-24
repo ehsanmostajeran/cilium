@@ -25,7 +25,7 @@ import (
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/fields"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/labels"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/runtime"
-	"k8s.io/kubernetes/pkg/watch"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/watch"
 )
 
 //TODO:

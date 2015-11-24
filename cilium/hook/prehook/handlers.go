@@ -18,9 +18,11 @@ import (
 var log = logging.MustGetLogger("cilium")
 
 const (
-	Type       = upr.PreHook
-	Docker     = "Docker"
-	Kubernetes = "Kubernetes"
+	Type         = upr.PreHook
+	Docker       = "Docker"
+	Kubernetes   = "Kubernetes"
+	Compose2Kube = "Compose2Kube"
+	Kube2Compose = "Kube2Compose"
 )
 
 type PreHook struct {
@@ -85,6 +87,8 @@ func defaultRequest(cont []byte) (m.Response, error) {
 	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
 			pphreq.ClientRequest.Request,
 			pphreq.ClientRequest.Body,
+			pphreq.ClientRequest.ServerIP,
+			pphreq.ClientRequest.ServerPort,
 		),
 		nil
 }
@@ -114,6 +118,10 @@ func (p PreHook) preHook(endPoint string, cont []byte) (m.Response, error) {
 		return p.preHookDocker(endPoint, pphreq, users, cont)
 	} else if strings.HasPrefix(endPoint, Kubernetes) {
 		return p.preHookKubernetes(endPoint, pphreq, users, cont)
+	} else if strings.HasPrefix(endPoint, Compose2Kube) {
+		return p.preHookCompose2Kube(endPoint, pphreq, users, cont)
+	} else if strings.HasPrefix(endPoint, Kube2Compose) {
+		return p.preHookKube2Compose(endPoint, pphreq, users, cont)
 	}
 
 	return defaultRequest(cont)
@@ -169,7 +177,8 @@ func (p PreHook) preHookDocker(endPoint string, pphreq PowerstripPreHookRequest,
 	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
 			pphreq.ClientRequest.Request,
 			respCreateConfig,
-		),
+			pphreq.ClientRequest.ServerIP,
+			pphreq.ClientRequest.ServerPort),
 		nil
 }
 
@@ -230,6 +239,61 @@ func (p PreHook) preHookKubernetes(endPoint string, pphreq PowerstripPreHookRequ
 	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
 			pphreq.ClientRequest.Request,
 			respCreateConfig,
-		),
+			pphreq.ClientRequest.ServerIP,
+			pphreq.ClientRequest.ServerPort),
+		nil
+}
+
+func (p PreHook) preHookCompose2Kube(endPoint string, pphreq PowerstripPreHookRequest,
+	users []up.User, cont []byte) (m.Response, error) {
+	log.Debug("Prehook")
+
+	var kubernetesObjRef m.KubernetesObjRef
+	if err := pphreq.UnmarshalKubernetesObjRefClientBody(&kubernetesObjRef); err != nil {
+		log.Error("Error: %+v", err)
+		return defaultRequest(cont)
+	}
+
+	for _, runnables := range upr.GetRunnables() {
+		runnable := runnables.GetRunnableFrom(users, nil)
+		log.Info("Loaded and merged policy for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, runnable)
+		if err := runnable.Compose2KubeExec(Type, endPoint, &pphreq.ClientRequest, nil, &kubernetesObjRef); err != nil {
+			log.Error("Error: %+v", err)
+			return defaultRequest(cont)
+		}
+	}
+
+	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
+			pphreq.ClientRequest.Request,
+			pphreq.ClientRequest.Body,
+			pphreq.ClientRequest.ServerIP,
+			pphreq.ClientRequest.ServerPort),
+		nil
+}
+
+func (p PreHook) preHookKube2Compose(endPoint string, pphreq PowerstripPreHookRequest,
+	users []up.User, cont []byte) (m.Response, error) {
+	log.Debug("Prehook")
+
+	var kubernetesObjRef m.KubernetesObjRef
+	if err := pphreq.UnmarshalKubernetesObjRefClientBody(&kubernetesObjRef); err != nil {
+		log.Error("Error: %+v", err)
+		return defaultRequest(cont)
+	}
+
+	for _, runnables := range upr.GetRunnables() {
+		runnable := runnables.GetRunnableFrom(users, nil)
+		log.Info("Loaded and merged policy for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, runnable)
+		if err := runnable.Kube2ComposeExec(Type, endPoint, &pphreq.ClientRequest, nil, &kubernetesObjRef); err != nil {
+			log.Error("Error: %+v", err)
+			return PowerstripPreHookResponse{}, err
+		}
+	}
+
+	return NewPowerstripPreHookResponse(pphreq.ClientRequest.Method,
+			pphreq.ClientRequest.Request,
+			pphreq.ClientRequest.Body,
+			pphreq.ClientRequest.ServerIP,
+			pphreq.ClientRequest.ServerPort),
 		nil
 }

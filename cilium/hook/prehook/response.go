@@ -15,10 +15,10 @@ type modifiedClientRequest struct {
 
 // NewPowerstripPreHookResponse creates and returns a new
 // PowerstripPreHookResponse from the giving method, request and body.
-func NewPowerstripPreHookResponse(method, request, body string) *PowerstripPreHookResponse {
+func NewPowerstripPreHookResponse(method, request, body, serverIP string, serverPort int) *PowerstripPreHookResponse {
 	p := new(PowerstripPreHookResponse)
 	p.PowerstripProtocolVersion = m.PowerstripProtocolVersion
-	p.ModifiedClientRequest = modifiedClientRequest{m.ClientRequest{method, request, body}}
+	p.ModifiedClientRequest = modifiedClientRequest{m.ClientRequest{method, request, body, serverIP, serverPort}}
 	return p
 }
 

@@ -7,7 +7,7 @@ import (
 )
 
 func TestNewPowerstripPreHookResponse(t *testing.T) {
-	pphr := NewPowerstripPreHookResponse(validMethod, validRequest, validBody)
+	pphr := NewPowerstripPreHookResponse(validMethod, validRequest, validBody, validServerIP, validServerPort)
 	if pphr.PowerstripProtocolVersion != m.PowerstripProtocolVersion {
 		t.Errorf("invalid PowerstripProtocolVersion:\ngot  %d\nwant %d",
 			pphr.PowerstripProtocolVersion,

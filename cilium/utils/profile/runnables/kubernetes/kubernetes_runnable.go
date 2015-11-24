@@ -90,3 +90,10 @@ func (kr KubernetesRunnable) KubernetesExec(hookType, reqType string, db ucdb.Db
 		ObjectReference: (k8s.ObjectReference)(kr.kubernetescfg.ObjectReference),
 		BodyObj:         (map[string]interface{})(kr.kubernetescfg.BodyObj)})
 }
+func (kr KubernetesRunnable) Kube2ComposeExec(hookType, reqType string, cr *m.ClientRequest, sr *m.ServerResponse, kor *m.KubernetesObjRef) error {
+	return nil
+}
+
+func (kr KubernetesRunnable) Compose2KubeExec(hookType, reqType string, cr *m.ClientRequest, sr *m.ServerResponse, kor *m.KubernetesObjRef) error {
+	return nil
+}

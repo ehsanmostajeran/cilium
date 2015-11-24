@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	PowerstripProtocolVersion = 1
+	PowerstripProtocolVersion = 2
 )
 
 type powerstripMessage struct {

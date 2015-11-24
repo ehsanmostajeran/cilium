@@ -24,7 +24,7 @@ import (
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api"
 	_ "github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api/install"
-	_ "k8s.io/kubernetes/pkg/apis/extensions/install"
+	_ "github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/apis/extensions/install"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api/latest"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api/meta"

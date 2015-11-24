@@ -20,9 +20,11 @@ import (
 var log = logging.MustGetLogger("cilium")
 
 const (
-	Type       = upr.PostHook
-	Docker     = "Docker"
-	Kubernetes = "Kubernetes"
+	Type         = upr.PostHook
+	Docker       = "Docker"
+	Kubernetes   = "Kubernetes"
+	Compose2Kube = "Compose2Kube"
+	Kube2Compose = "Kube2Compose"
 )
 
 type PostHook struct {
@@ -160,7 +162,12 @@ func (p PostHook) postHook(endPoint string, cont []byte) (m.Response, error) {
 		return p.postHookDocker(endPoint, pphreq, users, cont)
 	} else if strings.HasPrefix(endPoint, Kubernetes) {
 		return p.postHookKubernetes(endPoint, pphreq, users, cont)
+	} else if strings.HasPrefix(endPoint, Compose2Kube) {
+		return p.postHookCompose2Kube(endPoint, pphreq, users, cont)
+	} else if strings.HasPrefix(endPoint, Kube2Compose) {
+		return p.postHookKube2Compose(endPoint, pphreq, users, cont)
 	}
+	log.Debug("Endpoint: %+v", endPoint)
 
 	return defaultRequest(cont)
 }
@@ -262,6 +269,56 @@ func (p PostHook) postHookKubernetes(endPoint string, pphreq PowerstripPostHookR
 	log.Debug("Response kubernetesObjRef: %+v", kubernetesObjRef)
 
 	log.Info("Posthook successfully executed for kubernetesObjRef '%s'", kubernetesObjRef.Name)
+	return NewPowerstripPostHookResponse(pphreq.ServerResponse.ContentType,
+			pphreq.ServerResponse.Body,
+			pphreq.ServerResponse.Code),
+		nil
+}
+
+func (p PostHook) postHookCompose2Kube(endPoint string, pphreq PowerstripPostHookRequest,
+	users []up.User, cont []byte) (m.Response, error) {
+	log.Debug("Posthook")
+
+	var kubernetesObjRef m.KubernetesObjRef
+	if err := pphreq.UnmarshalKubernetesObjRefClientBody(&kubernetesObjRef); err != nil {
+		log.Error("Error: %+v", err)
+		return defaultRequest(cont)
+	}
+
+	for _, runnables := range upr.GetRunnables() {
+		runnable := runnables.GetRunnableFrom(users, nil)
+		log.Info("Loaded and merged policy for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, runnable)
+		if err := runnable.Compose2KubeExec(Type, endPoint, &pphreq.ClientRequest, &pphreq.ServerResponse, &kubernetesObjRef); err != nil {
+			log.Error("Error: %+v", err)
+			return PowerstripPostHookResponse{}, err
+		}
+	}
+
+	return NewPowerstripPostHookResponse(pphreq.ServerResponse.ContentType,
+			pphreq.ServerResponse.Body,
+			pphreq.ServerResponse.Code),
+		nil
+}
+
+func (p PostHook) postHookKube2Compose(endPoint string, pphreq PowerstripPostHookRequest,
+	users []up.User, cont []byte) (m.Response, error) {
+	log.Debug("Posthook")
+
+	var kubernetesObjRef m.KubernetesObjRef
+	if err := pphreq.UnmarshalKubernetesObjRefClientBody(&kubernetesObjRef); err != nil {
+		log.Error("Error: %+v", err)
+		return defaultRequest(cont)
+	}
+
+	for _, runnables := range upr.GetRunnables() {
+		runnable := runnables.GetRunnableFrom(users, nil)
+		log.Info("Loaded and merged policy for kubernetesObjRef '%s': %#v", kubernetesObjRef.Name, runnable)
+		if err := runnable.Kube2ComposeExec(Type, endPoint, &pphreq.ClientRequest, &pphreq.ServerResponse, &kubernetesObjRef); err != nil {
+			log.Error("Error: %+v", err)
+			return PowerstripPostHookResponse{}, err
+		}
+	}
+
 	return NewPowerstripPostHookResponse(pphreq.ServerResponse.ContentType,
 			pphreq.ServerResponse.Body,
 			pphreq.ServerResponse.Code),

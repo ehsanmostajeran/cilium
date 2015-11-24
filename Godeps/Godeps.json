@@ -19,6 +19,10 @@
 			"Rev": "cfe9bbdf65550fd388f9525f14350d6ccc33257c"
 		},
 		{
+			"ImportPath": "github.com/cilium-team/go-logging",
+			"Rev": "e8d5414f0947014548c2334044a0fac13187dfee"
+		},
+		{
 			"ImportPath": "github.com/cilium-team/mergo",
 			"Comment": "0.2.0-8-g2f6d38f",
 			"Rev": "2f6d38f329a3827b89643e20eab9e872e5d13135"
@@ -38,6 +42,11 @@
 		},
 		{
 			"ImportPath": "github.com/docker/docker/pkg/mount",
+			"Comment": "v1.4.1-7803-gad8a665",
+			"Rev": "ad8a66573c61483b9a0721470438dfc8bd01993f"
+		},
+		{
+			"ImportPath": "github.com/docker/docker/pkg/parsers/filters",
 			"Comment": "v1.4.1-7803-gad8a665",
 			"Rev": "ad8a66573c61483b9a0721470438dfc8bd01993f"
 		},
@@ -78,8 +87,21 @@
 			"Rev": "d3d78384b82d449651d2435ed329d70f7c48aa56"
 		},
 		{
+			"ImportPath": "github.com/google/cadvisor/info/v1",
+			"Comment": "v0.19.3-16-g587c022",
+			"Rev": "587c02275537c2d32e62963d61c191715bdb16de"
+		},
+		{
 			"ImportPath": "github.com/google/gofuzz",
 			"Rev": "e4af62d086c303f2bed467b227fc0a034b218916"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "ba336c9cfb43552c90de6cb2ceedd3271c747558"
 		},
 		{
 			"ImportPath": "github.com/juju/ratelimit",
@@ -158,7 +180,22 @@
 			"Rev": "92635e23dfafb2ddc828c8ac6c03c7a7205a84d8"
 		},
 		{
+			"ImportPath": "k8s.io/kubernetes/pkg/apis/extensions",
+			"Comment": "v1.1.1",
+			"Rev": "92635e23dfafb2ddc828c8ac6c03c7a7205a84d8"
+		},
+		{
 			"ImportPath": "k8s.io/kubernetes/pkg/auth/user",
+			"Comment": "v1.1.1",
+			"Rev": "92635e23dfafb2ddc828c8ac6c03c7a7205a84d8"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/client/metrics",
+			"Comment": "v1.1.1",
+			"Rev": "92635e23dfafb2ddc828c8ac6c03c7a7205a84d8"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/client/unversioned",
 			"Comment": "v1.1.1",
 			"Rev": "92635e23dfafb2ddc828c8ac6c03c7a7205a84d8"
 		},
@@ -189,6 +226,16 @@
 		},
 		{
 			"ImportPath": "k8s.io/kubernetes/pkg/util",
+			"Comment": "v1.1.1",
+			"Rev": "92635e23dfafb2ddc828c8ac6c03c7a7205a84d8"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/version",
+			"Comment": "v1.1.1",
+			"Rev": "92635e23dfafb2ddc828c8ac6c03c7a7205a84d8"
+		},
+		{
+			"ImportPath": "k8s.io/kubernetes/pkg/watch",
 			"Comment": "v1.1.1",
 			"Rev": "92635e23dfafb2ddc828c8ac6c03c7a7205a84d8"
 		},

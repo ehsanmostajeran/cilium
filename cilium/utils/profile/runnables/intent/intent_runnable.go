@@ -127,3 +127,11 @@ func (ir IntentRunnable) GetRunnableFrom(users []up.User, policies []up.PolicySo
 	log.Info("Final intent loaded: %#v", finalIntentCfg.Config)
 	return IntentRunnable{intent: &finalIntentCfg.Config}
 }
+
+func (ir IntentRunnable) Kube2ComposeExec(hookType, reqType string, cr *m.ClientRequest, sr *m.ServerResponse, kor *m.KubernetesObjRef) error {
+	return nil
+}
+
+func (ir IntentRunnable) Compose2KubeExec(hookType, reqType string, cr *m.ClientRequest, sr *m.ServerResponse, kor *m.KubernetesObjRef) error {
+	return nil
+}

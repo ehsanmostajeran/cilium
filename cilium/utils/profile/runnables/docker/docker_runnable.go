@@ -96,3 +96,11 @@ func (dr DockerRunnable) DockerExec(hookType, reqType string, db ucdb.Db, cc *m.
 func (dr DockerRunnable) KubernetesExec(hookType, reqType string, db ucdb.Db, cc *m.KubernetesObjRef) error {
 	return nil
 }
+
+func (dr DockerRunnable) Kube2ComposeExec(hookType, reqType string, cr *m.ClientRequest, sr *m.ServerResponse, kor *m.KubernetesObjRef) error {
+	return nil
+}
+
+func (dr DockerRunnable) Compose2KubeExec(hookType, reqType string, cr *m.ClientRequest, sr *m.ServerResponse, kor *m.KubernetesObjRef) error {
+	return nil
+}

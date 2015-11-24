@@ -39,5 +39,7 @@ type PolicyRunnable interface {
 	GetRunnableFrom(users []up.User, policies []up.PolicySource) PolicyRunnable
 	DockerExec(hookType, reqType string, db ucdb.Db, cc *m.DockerCreateConfig) error
 	KubernetesExec(hookType, reqType string, db ucdb.Db, cc *m.KubernetesObjRef) error
+	Kube2ComposeExec(hookType, reqType string, cr *m.ClientRequest, sr *m.ServerResponse, kor *m.KubernetesObjRef) error
+	Compose2KubeExec(hookType, reqType string, cr *m.ClientRequest, sr *m.ServerResponse, kor *m.KubernetesObjRef) error
 	GetHandlers(typ string) map[string]string
 }

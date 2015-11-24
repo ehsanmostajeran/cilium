@@ -21,11 +21,11 @@ import (
 	"hash/adler32"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/apis/extensions"
+	client "github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/client/unversioned"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/fields"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/labels"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/util"
-	"k8s.io/kubernetes/pkg/apis/extensions"
-	client "k8s.io/kubernetes/pkg/client/unversioned"
 )
 
 // Returns the old RCs targetted by the given Deployment.

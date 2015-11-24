@@ -16,6 +16,8 @@ import (
 )
 
 var (
+	validServerIP                = "127.0.0.1"
+	validServerPort              = 80
 	validType                    = `"pre-hook"`
 	validPPV                     = 1
 	validDockerRequestHeader     = `"/v1.15/containers/create?name=hello-world"`

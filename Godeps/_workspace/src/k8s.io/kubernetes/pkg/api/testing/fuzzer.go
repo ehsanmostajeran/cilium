@@ -28,12 +28,12 @@ import (
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api/registered"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api/resource"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api/unversioned"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/apis/extensions"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/fields"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/labels"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/runtime"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/types"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/util"
-	"k8s.io/kubernetes/pkg/apis/extensions"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/google/gofuzz"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/speter.net/go/exp/math/dec/inf"

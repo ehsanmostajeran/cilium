@@ -104,6 +104,7 @@ infect(){
     echo "Infecting node with cilium..."
     echo "MASTER_IP=${MASTER_IP}"
     echo "IP=${IP}"
+    echo "KUBERNETES=$KUBERNETES"
     echo "Downloading scripts..."
     tmp_dir=$(mktemp -d)
     scripts_tmp="${tmp_dir}/scripts"

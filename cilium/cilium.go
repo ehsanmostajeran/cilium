@@ -17,8 +17,10 @@ import (
 	uc "github.com/cilium-team/cilium/cilium/utils/comm"
 	ucdb "github.com/cilium-team/cilium/cilium/utils/comm/db"
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
+	uprc2k "github.com/cilium-team/cilium/cilium/utils/profile/runnables/compose2kube"
 	uprd "github.com/cilium-team/cilium/cilium/utils/profile/runnables/docker"
 	upri "github.com/cilium-team/cilium/cilium/utils/profile/runnables/intent"
+	uprk2c "github.com/cilium-team/cilium/cilium/utils/profile/runnables/kube2compose"
 	uprk "github.com/cilium-team/cilium/cilium/utils/profile/runnables/kubernetes"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/ant0ine/go-json-rest/rest"
@@ -49,9 +51,11 @@ var (
 )
 
 const (
-	dockerDaemonPreBaseAddr     = "/docker/daemon/cilium-adapter"
-	dockerSwarmPreBaseAddr      = "/docker/swarm/cilium-adapter"
-	kubernetesMasterPreBaseAddr = "/kubernetes/master/cilium-adapter"
+	dockerDaemonPreBaseAddr       = "/docker/daemon/cilium-adapter"
+	dockerSwarmPreBaseAddr        = "/docker/swarm/cilium-adapter"
+	kubernetesMasterPreBaseAddr   = "/kubernetes/master/cilium-adapter"
+	compose2kubeMasterPreBaseAddr = "/compose2kube/master/cilium-adapter"
+	kube2composeMasterPreBaseAddr = "/kube2compose/master/cilium-adapter"
 )
 
 func init() {
@@ -94,6 +98,12 @@ func setupRunnables() {
 		log.Fatal("Failed while registering a runnable: ", err)
 	}
 	if err := upr.Register(uprk.Name, uprk.KubernetesRunnable{}); err != nil {
+		log.Fatal("Failed while registering a runnable: ", err)
+	}
+	if err := upr.Register(uprc2k.Name, uprc2k.Compose2KubeRunnable{}); err != nil {
+		log.Fatal("Failed while registering a runnable: ", err)
+	}
+	if err := upr.Register(uprk2c.Name, uprk2c.Kube2ComposeRunnable{}); err != nil {
 		log.Fatal("Failed while registering a runnable: ", err)
 	}
 	if err := upr.Register(upri.Name, upri.IntentRunnable{}); err != nil {
@@ -224,6 +234,8 @@ func main() {
 		&rest.Route{"POST", dockerDaemonPreBaseAddr, DockerDaemonRequestsHandler},
 		&rest.Route{"POST", dockerSwarmPreBaseAddr, DockerSwarmRequestsHandler},
 		&rest.Route{"POST", kubernetesMasterPreBaseAddr, KubernetesMasterRequestHandler},
+		&rest.Route{"POST", compose2kubeMasterPreBaseAddr, Compose2KubeMasterRequestHandler},
+		&rest.Route{"POST", kube2composeMasterPreBaseAddr, Kube2ComposeMasterRequestHandler},
 	)
 	if err != nil {
 		log.Fatalf("%s", err)
@@ -253,6 +265,14 @@ func DockerSwarmRequestsHandler(w rest.ResponseWriter, req *rest.Request) {
 
 func KubernetesMasterRequestHandler(w rest.ResponseWriter, req *rest.Request) {
 	RequestsHandler(kubernetesMasterPreBaseAddr, w, req)
+}
+
+func Compose2KubeMasterRequestHandler(w rest.ResponseWriter, req *rest.Request) {
+	RequestsHandler(compose2kubeMasterPreBaseAddr, w, req)
+}
+
+func Kube2ComposeMasterRequestHandler(w rest.ResponseWriter, req *rest.Request) {
+	RequestsHandler(kube2composeMasterPreBaseAddr, w, req)
 }
 
 func RequestsHandler(baseAddr string, w rest.ResponseWriter, req *rest.Request) {
