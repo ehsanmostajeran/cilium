@@ -85,9 +85,9 @@ func AddEndpoint(dbConn ucdb.Db, containerID string) error {
 				}
 			}
 		}
-		break
+		return nil
 	}
-	return nil
+	return fmt.Errorf("Remote endpoint not found for container: '%v'", containerID)
 }
 
 // RemoveLocalEndpoint removes the local endpoint for the remote container with

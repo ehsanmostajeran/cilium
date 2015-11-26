@@ -46,6 +46,8 @@ var (
 	)
 	logsDateFormat    = `-2006-01-02`
 	logNameTimeFormat = time.RFC3339
+	containersInCache = u.NewSet()
+	refreshNetConfig  = 60 //seconds
 )
 
 const (
@@ -235,9 +237,17 @@ func main() {
 	api.SetApp(router)
 	log.Info("cilium has started")
 	log.Info("Updating state based on the other nodes")
-	if err := updateEndpoints(dockerclient, dbConn); err != nil {
-		log.Error("Error while updating state from other nodes", err)
-	}
+
+	go func() {
+		for {
+			timeToProcess1 := time.Now()
+			if err := updateEndpoints(dockerclient, dbConn); err != nil {
+				log.Error("Error while updating state from other nodes", err)
+			}
+			timeToProcess2 := time.Now()
+			time.Sleep(time.Second*time.Duration(refreshNetConfig) - timeToProcess2.Sub(timeToProcess1))
+		}
+	}()
 
 	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), api.MakeHandler()))
 
@@ -298,25 +308,36 @@ func listenForEvents(event *d.Event, ec chan error, args ...interface{}) {
 			log.Debug("Msg received listen only %s", event)
 			switch event.Status {
 			case "create":
-				log.Info("Adding endpoint for %s", event.Id)
-				u.AddEndpoint(dbConn, event.Id)
+				if containersInCache.Add(event.Id) < 3 {
+					log.Info("Adding endpoint for %s", event.Id)
+					if err := u.AddEndpoint(dbConn, event.Id); err != nil {
+						containersInCache.IncFail(event.Id)
+					}
+				}
 			case "start":
 			case "stop":
+				fallthrough
 			case "destroy":
 				fallthrough
 			case "die":
-				log.Info("Removing endpoint for %s", event.Id)
-				if containerIPs, err := dbConn.GetEndpoint(event.Id); err == nil {
-					for _, ip := range containerIPs.IPs {
-						dbConn.DeleteIP(ip)
+				if containersInCache.Remove(event.Id) {
+					log.Info("Removing endpoint for %s", event.Id)
+					// Only local will be allowed to remove entries
+					if event.From == "node:"+os.Getenv("HOSTNAME") ||
+						event.From == "self" {
+						if containerIPs, err := dbConn.GetEndpoint(event.Id); err == nil {
+							for _, ip := range containerIPs.IPs {
+								dbConn.DeleteIP(ip)
+							}
+							u.RemoveLocalEndpoint(dbConn, event.Id)
+							dbConn.DeleteEndpoint(event.Id)
+						}
 					}
-					u.RemoveLocalEndpoint(dbConn, event.Id)
-					dbConn.DeleteEndpoint(event.Id)
+					/*if haProxyClient, err := dbConn.GetHAProxyConfig(); err == nil {
+						haProxyClient.DeleteBackend(event.Id)
+					}*/
+					u.RemoveEndpoint(event.Id)
 				}
-				/*if haProxyClient, err := dbConn.GetHAProxyConfig(); err == nil {
-					haProxyClient.DeleteBackend(event.Id)
-				}*/
-				u.RemoveEndpoint(event.Id)
 			}
 		}(*event)
 	}
@@ -327,7 +348,7 @@ func updateEndpoints(dClient uc.Docker, dbConn ucdb.Db) error {
 	if err != nil {
 		return err
 	}
-	allContainers, err := dClient.ListContainers(dfsouza.ListContainersOptions{All: true})
+	allContainers, err := dClient.ListContainers(dfsouza.ListContainersOptions{All: false})
 	if err != nil {
 		return err
 	}
