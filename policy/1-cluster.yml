@@ -32,8 +32,6 @@ policy-source:
           host-config:
             Hostname: "dns"
             NetworkMode: "bridge"
-            RestartPolicy:
-              Name: "always"
             Dns:
               - "8.8.8.8"
               - "8.8.4.4"
@@ -58,8 +56,6 @@ policy-source:
           host-config:
             Hostname: "haproxy"
             NetworkMode: "bridge"
-            RestartPolicy:
-              Name: "always"
             Dns:
               - "8.8.8.8"
               - "8.8.4.4"
