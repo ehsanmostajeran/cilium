@@ -2,8 +2,8 @@
 set -e
 dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
-marvel="marvel-2.0.0.tar.gz"
-kibana_tag="4.2.0"
+marvel="marvel-2.1.0.tar.gz"
+kibana_tag="4.3.0"
 
 cd "${dir}/.."
 

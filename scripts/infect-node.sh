@@ -3,6 +3,7 @@ set -e
 dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 
 swarm_tag="1.0.0"
+es_version="2.1.0"
 
 cilium_port="8081"
 consul_port="8500"
@@ -74,7 +75,7 @@ start_elasticsearch() {
            -l "com.intent.service=gov_db" \
            -l "com.intent.logical-name=cilium-elastic" \
            -e ES_HEAP_SIZE=3g \
-           elasticsearch:2.0.0 \
+           elasticsearch:${es_version} \
            elasticsearch \
            -Des.cluster.name="cilium-elastic" \
            -Des.network.bind_host="${IP}" \
@@ -82,20 +83,20 @@ start_elasticsearch() {
            -Des.http.publish_host="${IP}" "${@}"
 
     docker cp \
-           "${dir}/../external-deps/license-2.0.0.zip" cilium-elastic:/tmp
+           "${dir}/../external-deps/license-${es_version}.zip" cilium-elastic:/tmp
 
     docker exec \
            cilium-elastic \
            /usr/share/elasticsearch/bin/plugin install \
-           file:///tmp/license-2.0.0.zip
+           "file:///tmp/license-${es_version}.zip"
 
     docker cp \
-           "${dir}/../external-deps/marvel-agent-2.0.0.zip" cilium-elastic:/tmp
+           "${dir}/../external-deps/marvel-agent-${es_version}.zip" cilium-elastic:/tmp
 
     docker exec \
            cilium-elastic \
            /usr/share/elasticsearch/bin/plugin install \
-           file:///tmp/marvel-agent-2.0.0.zip
+           "file:///tmp/marvel-agent-${es_version}.zip"
 
     docker restart cilium-elastic
 }

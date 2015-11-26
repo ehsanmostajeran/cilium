@@ -145,8 +145,8 @@
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v3",
-			"Comment": "v3.0.4",
-			"Rev": "733c2b5b30f2906ae72417944fa0fa09abaf8d5e"
+			"Comment": "v3.0.4-6-gc3762bc",
+			"Rev": "c3762bc7868c446b1fe2b689652651d8642f02ec"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",

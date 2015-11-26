@@ -22,7 +22,7 @@ import (
 
 const (
 	// Version is the current version of Elastic.
-	Version = "3.0.4"
+	Version = "3.0.6"
 
 	// DefaultUrl is the default endpoint of Elasticsearch on the local machine.
 	// It is used e.g. when initializing a new Client without a specific URL.
@@ -72,6 +72,13 @@ const (
 	// Elastic will give up and return an error. It is zero by default, so
 	// retry is disabled by default.
 	DefaultMaxRetries = 0
+
+	// DefaultSendGetBodyAs is the HTTP method to use when elastic is sending
+	// a GET request with a body.
+	DefaultSendGetBodyAs = "GET"
+
+	// DefaultGzipEnabled specifies if gzip compression is enabled by default.
+	DefaultGzipEnabled = false
 )
 
 var (
@@ -121,7 +128,9 @@ type Client struct {
 	basicAuth                 bool          // indicates whether to send HTTP Basic Auth credentials
 	basicAuthUsername         string        // username for HTTP Basic Auth
 	basicAuthPassword         string        // password for HTTP Basic Auth
+	sendGetBodyAs             string        // override for when sending a GET with a body
 	requiredPlugins           []string      // list of required plugins
+	gzipEnabled               bool          // gzip compression enabled or disabled (default)
 }
 
 // NewClient creates a new client to work with Elasticsearch.
@@ -187,6 +196,8 @@ func NewClient(options ...ClientOptionFunc) (*Client, error) {
 		snifferTimeout:            DefaultSnifferTimeout,
 		snifferInterval:           DefaultSnifferInterval,
 		snifferStop:               make(chan bool),
+		sendGetBodyAs:             DefaultSendGetBodyAs,
+		gzipEnabled:               DefaultGzipEnabled,
 	}
 
 	// Run the options on it
@@ -393,6 +404,14 @@ func SetMaxRetries(maxRetries int) func(*Client) error {
 	}
 }
 
+// SetGzip enables or disables gzip compression (disabled by default).
+func SetGzip(enabled bool) ClientOptionFunc {
+	return func(c *Client) error {
+		c.gzipEnabled = enabled
+		return nil
+	}
+}
+
 // SetDecoder sets the Decoder to use when decoding data from Elasticsearch.
 // DefaultDecoder is used by default.
 func SetDecoder(decoder Decoder) func(*Client) error {
@@ -441,6 +460,15 @@ func SetInfoLog(logger *log.Logger) func(*Client) error {
 func SetTraceLog(logger *log.Logger) func(*Client) error {
 	return func(c *Client) error {
 		c.tracelog = logger
+		return nil
+	}
+}
+
+// SendGetBodyAs specifies the HTTP method to use when sending a GET request
+// with a body. It is GET by default.
+func SetSendGetBodyAs(httpMethod string) func(*Client) error {
+	return func(c *Client) error {
+		c.sendGetBodyAs = httpMethod
 		return nil
 	}
 }
@@ -913,6 +941,8 @@ func (c *Client) PerformRequest(method, path string, params url.Values, body int
 	basicAuth := c.basicAuth
 	basicAuthUsername := c.basicAuthUsername
 	basicAuthPassword := c.basicAuthPassword
+	sendGetBodyAs := c.sendGetBodyAs
+	gzipEnabled := c.gzipEnabled
 	c.mu.RUnlock()
 
 	var err error
@@ -924,6 +954,11 @@ func (c *Client) PerformRequest(method, path string, params url.Values, body int
 	// We wait between retries, using simple exponential back-off.
 	// TODO: Make this configurable, including the jitter.
 	retryWaitMsec := int64(100 + (rand.Intn(20) - 10))
+
+	// Change method if sendGetBodyAs is specified.
+	if method == "GET" && body != nil && sendGetBodyAs != "GET" {
+		method = sendGetBodyAs
+	}
 
 	for {
 		pathWithParams := path
@@ -964,14 +999,7 @@ func (c *Client) PerformRequest(method, path string, params url.Values, body int
 
 		// Set body
 		if body != nil {
-			switch b := body.(type) {
-			case string:
-				req.SetBodyString(b)
-				break
-			default:
-				req.SetBodyJson(body)
-				break
-			}
+			req.SetBody(body, gzipEnabled)
 		}
 
 		// Tracing

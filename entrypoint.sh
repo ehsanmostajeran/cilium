@@ -80,8 +80,8 @@ prepare(){
         cilium/powerstrip:latest \
         "swarm-1.0.0.ditar" \
         swarm:1.0.0 \
-        "elasticsearch-2.0.0.ditar" \
-        elasticsearch:2.0.0 \
+        "elasticsearch-2.1.0.ditar" \
+        elasticsearch:2.1.0 \
         "haproxy-rest.ditar" \
         tnolet/haproxy-rest:latest \
         "consul.ditar" \
