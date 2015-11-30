@@ -15,10 +15,6 @@
 			"Rev": "b965b613227fddccbfffe13eae360ed3fa822f8d"
 		},
 		{
-			"ImportPath": "github.com/cilium-team/elastic-go-logging",
-			"Rev": "cfe9bbdf65550fd388f9525f14350d6ccc33257c"
-		},
-		{
 			"ImportPath": "github.com/cilium-team/mergo",
 			"Comment": "0.2.0-8-g2f6d38f",
 			"Rev": "2f6d38f329a3827b89643e20eab9e872e5d13135"

@@ -17,11 +17,14 @@ is_master="${NET_IP}"
 workdir="$(mktemp -d)/cilium"
 consul_dir="${workdir}/consul"
 pwrstrip_dir="${workdir}/powerstrip/swarm/local"
+logstash_dir="${workdir}/logstash"
 mkdir -p "${pwrstrip_dir}"
 mkdir -p "${consul_dir}"
+mkdir -p "${logstash_dir}"
 adapter_file_docker_swarm="${pwrstrip_dir}/adapters-local-1.yml"
 adapter_file_docker_daemon="${pwrstrip_dir}/adapters-local-2.yml"
 adapter_file_kubernetes="${pwrstrip_dir}/adapters-local-3.yml"
+logstash_config_file="${logstash_dir}/logstash.conf"
 configs_dir=$(cd "${dir}/../external-deps/docker-collector-configs" && pwd)
 
 list_IPs() {
@@ -74,7 +77,7 @@ start_elasticsearch() {
            --net "host" \
            -l "com.intent.service=gov_db" \
            -l "com.intent.logical-name=cilium-elastic" \
-           -e ES_HEAP_SIZE=3g \
+           -e ES_HEAP_SIZE=1g \
            elasticsearch:${es_version} \
            elasticsearch \
            -Des.cluster.name="cilium-elastic" \
@@ -109,6 +112,7 @@ start_cilium() {
            --net "host" \
            --pid "host" \
            --privileged \
+           -v /tmp/cilium-logs \
            -v /var/run/openvswitch/db.sock:/var/run/openvswitch/db.sock \
            -v /var/run/openvswitch/lxc-br0.mgmt:/var/run/openvswitch/lxc-br0.mgmt \
            -e HOST_IP="${IP}" \
@@ -116,6 +120,52 @@ start_cilium() {
            -e DOCKER_HOST="tcp://${IP}:${swarm_master_port}" \
            cilium/cilium \
            -l=debug -e=false -P "${cilium_port}"
+}
+
+create_logstash_conf_file() {
+
+    cat > "${logstash_config_file}" << EOF
+input {
+    file {
+        path => "/tmp/cilium-logs/cilium-log-*.log"
+        start_position => beginning
+    }
+}
+
+filter {
+  grok {
+    match => [ "message", "\A%{TIMESTAMP_ISO8601:timestamp}%{SPACE}%{HOSTNAME:node}%{SPACE}%{WORD}%{SPACE}%{NOTSPACE}%{SPACE}%{WORD:level}%{SPACE}%{WORD}%{SPACE}%{GREEDYDATA:logMessage}" ]
+  }
+  date {
+    match => [ "timestamp", "ISO8601" ]
+    target => [ "@timestamp" ]
+  }
+  mutate {
+    remove_field => [ "message", "timestamp", "host", "tags", "path" ]
+  }
+}
+
+output {
+  elasticsearch {
+    hosts => ["${IP}:9200"]
+    index => "cilium-log-%{+YYYY-MM-dd}"
+  }
+}
+EOF
+
+chmod a+r "${logstash_config_file}"
+
+}
+
+# Start logstash
+start_logstash() {
+    docker run \
+           -d \
+           --name "cilium-logstash" \
+           --volumes-from "cilium" \
+           -v "${logstash_config_file}:/logstash-filter.conf" \
+           logstash:${es_version} \
+           -f /logstash-filter.conf
 }
 
 # Create adapter files
@@ -281,6 +331,10 @@ else
 fi
 
 start_cilium
+
+create_logstash_conf_file
+
+start_logstash
 
 create_adapter_files
 

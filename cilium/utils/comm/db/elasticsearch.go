@@ -100,15 +100,19 @@ func NewElasticConnTo(ip, port string) (EConn, error) {
 	var outerr error
 	clientInit.Do(func() {
 		logTimename := time.Now().Format(logNameTimeFormat)
-		fo, err := os.Create(os.TempDir() + "/cilium-elastic-out-" + logTimename + ".log")
+		ciliumLogsDir := os.TempDir() + string(os.PathSeparator) + "cilium-logs"
+		if err := os.MkdirAll(ciliumLogsDir, 0755); err != nil {
+			log.Error("Error while creating directory: %v", err)
+		}
+		fo, err := os.Create(ciliumLogsDir + string(os.PathSeparator) + "cilium-elastic-out-" + logTimename + ".log")
 		if err != nil {
 			l.Fatalf("Error while creating a log file: %s", err)
 		}
-		fe, err := os.Create(os.TempDir() + "/cilium-elastic-error-" + logTimename + ".log")
+		fe, err := os.Create(ciliumLogsDir + string(os.PathSeparator) + "cilium-elastic-error-" + logTimename + ".log")
 		if err != nil {
 			l.Fatalf("Error while creating a log file: %s", err)
 		}
-		//		ft, err := os.Create(os.TempDir() + "/cilium-elastic-trace-" + logTimename + ".log")
+		//		ft, err := os.Create(ciliumLogsDir + string(os.PathSeparator) + "cilium-elastic-trace-" + logTimename + ".log")
 		//		if err != nil {
 		//			l.Fatalf("Error while creating a log file: %s", err)
 		//		}

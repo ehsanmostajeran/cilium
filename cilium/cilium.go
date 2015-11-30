@@ -22,7 +22,6 @@ import (
 	uprk "github.com/cilium-team/cilium/cilium/utils/profile/runnables/kubernetes"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/ant0ine/go-json-rest/rest"
-	el "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/elastic-go-logging"
 	dfsouza "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/samalba/dockerclient"
@@ -42,7 +41,7 @@ var (
 		`%{color}%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x}%{color:reset} %{message}`,
 	)
 	fileFormat = logging.MustStringFormatter(
-		`%{time:15:04:05.000} %{shortfunc} ▶ %{level:.4s} %{id:03x} %{message}`,
+		`%{time:` + time.RFC3339Nano + `} ` + os.Getenv("HOSTNAME") + ` %{shortfunc} ▶ %{level:.4s} %{id:03x} %{message}`,
 	)
 	logsDateFormat    = `-2006-01-02`
 	logNameTimeFormat = time.RFC3339
@@ -117,32 +116,22 @@ func setupLOG() {
 		log.SetBackend(backendLeveled)
 	} else {
 		logTimename := time.Now().Format(logNameTimeFormat)
-		fo, err := os.Create(os.TempDir() + "/cilium-" + logTimename + ".log")
+		ciliumLogsDir := os.TempDir() + string(os.PathSeparator) + "cilium-logs"
+		if err := os.MkdirAll(ciliumLogsDir, 0755); err != nil {
+			log.Error("Error while creating directory: %v", err)
+		}
+		fo, err := os.Create(ciliumLogsDir + string(os.PathSeparator) + "cilium-log-" + logTimename + ".log")
 		if err != nil {
 			log.Error("Error while creating log file: %v", err)
 		}
 		fileBackend := logging.NewLogBackend(fo, "", 0)
-
-		db, err := ucdb.NewElasticConn()
-		if err != nil {
-			log.Error("Error while getting a DB instance: %v", err)
-		}
-		hn, err := os.Hostname()
-		if err != nil {
-			log.Debug("Error while getting the hostname: %v", err)
-		}
-
-		elasticBackend, err := el.NewElasticSearchBackendFrom(db.Client, "cilium-log", hn, 0)
-		if err != nil {
-			log.Error("Error while getting the new logrus hook: %v", err)
-		}
 
 		fBF := logging.NewBackendFormatter(fileBackend, fileFormat)
 
 		backend := logging.NewLogBackend(os.Stderr, "", 0)
 		oBF := logging.NewBackendFormatter(backend, fileFormat)
 
-		backendLeveled := logging.SetBackend(fBF, elasticBackend, oBF)
+		backendLeveled := logging.SetBackend(fBF, oBF)
 		backendLeveled.SetLevel(level, "")
 		log.SetBackend(backendLeveled)
 	}

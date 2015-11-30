@@ -22,6 +22,8 @@ docker cp \
        "./external-deps/${marvel}" \
        cilium-kibana:/tmp
 
+sleep 2s
+
 docker exec \
        -ti \
        cilium-kibana \
