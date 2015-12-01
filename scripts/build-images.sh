@@ -15,8 +15,6 @@ redis:latest \
 swarm:1.0.0 \
 "elasticsearch-2.1.0.ditar" \
 elasticsearch:2.1.0 \
-"kibana-4.3.0.ditar" \
-kibana:4.3.0 \
 "logstash-2.1.0.ditar" \
 logstash:2.1.0 \
 "haproxy-rest.ditar" \
