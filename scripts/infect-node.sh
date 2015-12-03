@@ -8,6 +8,7 @@ es_version="2.1.0"
 cilium_port="8081"
 consul_port="8500"
 k8s_port="8080"
+logstash_port="8080"
 pwr_bef_daemon_port="2371"
 pwr_bef_kub_master="8083"
 pwr_bef_swarm_port="2375"
@@ -21,10 +22,12 @@ logstash_dir="${workdir}/logstash"
 mkdir -p "${pwrstrip_dir}"
 mkdir -p "${consul_dir}"
 mkdir -p "${logstash_dir}"
+chmod a+rx "${logstash_dir}"
 adapter_file_docker_swarm="${pwrstrip_dir}/adapters-local-1.yml"
 adapter_file_docker_daemon="${pwrstrip_dir}/adapters-local-2.yml"
 adapter_file_kubernetes="${pwrstrip_dir}/adapters-local-3.yml"
-logstash_config_file="${logstash_dir}/logstash.conf"
+logstash_cilium_conf_file="${logstash_dir}/logstash-cilium.conf"
+logstash_dcolle_conf_file="${logstash_dir}/logstash-docker-collector.conf"
 configs_dir=$(cd "${dir}/../external-deps/docker-collector-configs" && pwd)
 
 list_IPs() {
@@ -122,38 +125,78 @@ start_cilium() {
            -l=debug -e=false -P "${cilium_port}"
 }
 
-create_logstash_conf_file() {
+create_logstash_conf_files() {
 
-    cat > "${logstash_config_file}" << EOF
+    cat > "${logstash_cilium_conf_file}" << EOF
 input {
-    file {
-        path => "/tmp/cilium-logs/cilium-log-*.log"
-        start_position => beginning
-    }
+  file {
+    type => "cilium-log"
+    path => "/tmp/cilium-logs/cilium-log-*.log"
+    start_position => beginning
+  }
 }
 
 filter {
-  grok {
-    match => [ "message", "\A%{TIMESTAMP_ISO8601:timestamp}%{SPACE}%{HOSTNAME:node}%{SPACE}%{WORD}%{SPACE}%{NOTSPACE}%{SPACE}%{WORD:level}%{SPACE}%{WORD}%{SPACE}%{GREEDYDATA:logMessage}" ]
-  }
-  date {
-    match => [ "timestamp", "ISO8601" ]
-    target => [ "@timestamp" ]
-  }
-  mutate {
-    remove_field => [ "message", "timestamp", "host", "tags", "path" ]
+  if [type] == "cilium-log" {
+    grok {
+      match => [ "message", "\A%{TIMESTAMP_ISO8601:timestamp}%{SPACE}%{HOSTNAME:node}%{SPACE}%{WORD}%{SPACE}%{NOTSPACE}%{SPACE}%{WORD:level}%{SPACE}%{WORD}%{SPACE}%{GREEDYDATA:logMessage}" ]
+    }
+    date {
+      match => [ "timestamp", "ISO8601" ]
+      target => [ "@timestamp" ]
+    }
+    mutate {
+      remove_field => [ "message", "timestamp", "host", "tags", "path", "_score", "_type"]
+    }
   }
 }
 
 output {
-  elasticsearch {
-    hosts => ["${IP}:9200"]
-    index => "cilium-log-%{+YYYY-MM-dd}"
+  if [type] == "cilium-log" {
+    elasticsearch {
+      hosts => ["${IP}:9200"]
+      index => "cilium-log-%{+YYYY-MM-dd}"
+    }
   }
 }
 EOF
 
-chmod a+r "${logstash_config_file}"
+chmod a+r "${logstash_cilium_conf_file}"
+
+    cat > "${logstash_dcolle_conf_file}" << EOF
+input {
+  tcp {
+    type => "cilium-docker-collector"
+    port => "${logstash_port}"
+  }
+}
+
+filter {
+  if [type] == "cilium-docker-collector" {
+    json {
+      source => "message"
+    }
+    date {
+      match => [ "UpdatedAt", "ISO8601" ]
+      target => [ "@timestamp" ]
+    }
+    mutate {
+      remove_field => [ "message", "host", "tags", "path", "_score", "_type"]
+    }
+  }
+}
+
+output {
+  if [type] == "cilium-docker-collector" {
+    elasticsearch {
+      hosts => ["${IP}:9200"]
+      index => "cilium-docker-collector-%{+YYYY-MM-dd}"
+    }
+  }
+}
+EOF
+
+chmod a+r "${logstash_dcolle_conf_file}"
 
 }
 
@@ -163,9 +206,11 @@ start_logstash() {
            -d \
            --name "cilium-logstash" \
            --volumes-from "cilium" \
-           -v "${logstash_config_file}:/logstash-filter.conf" \
+           -v "${logstash_dir}:/config" \
            logstash:${es_version} \
-           -f /logstash-filter.conf
+           -f /config
+
+    sleep 2s
 }
 
 # Create adapter files
@@ -284,7 +329,7 @@ start_swarm() {
            "consul://${IP}:${consul_port}/ciliumnodes"
 
     # Given swarm master time to start up or we might end up without an event manager
-    sleep 3s
+    sleep 5s
 }
 
 # Local cilium swarm event handler
@@ -313,8 +358,11 @@ start_docker_collector() {
            --pid "host" \
            --privileged \
            -e ELASTIC_IP="${IP}" \
+           -e LOGSTASH_IP="logstash" \
+           -e LOGSTASH_PORT="${logstash_port}" \
            -v /var/run/docker.sock:/var/run/docker.sock \
            -v "${configs_dir}:/docker-collector/configs" \
+           --link cilium-logstash:logstash \
            cilium/docker-collector:latest \
            -f '(k8s_.*)|(cilium.*)' \
            -i 'cilium-docker-collector' \
@@ -332,7 +380,7 @@ fi
 
 start_cilium
 
-create_logstash_conf_file
+create_logstash_conf_files
 
 start_logstash
 
