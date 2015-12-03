@@ -27,7 +27,7 @@ policy-source:
           config:
             Hostname: "dns"
             Env:
-              - "affinity:image==cilium/docker-dns-rest:1.0-rr-with-del"
+              - "affinity:image==cilium/docker-dns-rest:latest"
               - "affinity:com.intent.service==gov_swarm_events"
           host-config:
             Hostname: "dns"

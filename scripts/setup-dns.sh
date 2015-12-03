@@ -7,7 +7,7 @@ swarm-master -q docker run \
 	     -d \
 	     -p 80:80 -p 53:53/udp \
 	     -l "com.intent.service=svc_dns" \
-	     cilium/docker-dns-rest:1.0-rr-with-del
+	     cilium/docker-dns-rest:latest
 
 sleep 3s
 

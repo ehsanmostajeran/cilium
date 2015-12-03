@@ -89,7 +89,7 @@ prepare(){
         "consul.ditar" \
         progrium/consul:latest \
         "cilium-dns.ditar" \
-        cilium/docker-dns-rest:1.0-rr-with-del \
+        cilium/docker-dns-rest:latest \
         "docker-collector.ditar" \
         cilium/docker-collector:latest \
         "cilium.ditar" \
