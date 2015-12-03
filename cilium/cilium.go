@@ -297,10 +297,15 @@ func listenForEvents(event *d.Event, ec chan error, args ...interface{}) {
 			log.Debug("Msg received listen only %s", event)
 			switch event.Status {
 			case "create":
-				if containersInCache.Add(event.Id) < 3 {
+				maxAttemps := 3
+				if containersInCache.Add(event.Id) < maxAttemps {
 					log.Info("Adding endpoint for %s", event.Id)
 					if err := u.AddEndpoint(dbConn, event.Id); err != nil {
-						containersInCache.IncFail(event.Id)
+						if attemps := containersInCache.IncFail(event.Id); attemps >= maxAttemps {
+							containersInCache.Set(event.Id, u.Failed)
+						}
+					} else {
+						containersInCache.Set(event.Id, u.Configured)
 					}
 				}
 			case "start":

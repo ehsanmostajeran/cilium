@@ -4,20 +4,24 @@ import (
 	"sync"
 )
 
+const (
+	Configured = 100
+	Failed     = 200
+)
+
 type Set struct {
-	m map[string]uint
+	m map[string]int
 	sync.RWMutex
 }
 
 func NewSet() *Set {
 	return &Set{
-		m: make(map[string]uint),
+		m: make(map[string]int),
 	}
 }
 
-// Add adds a new item to the set and returns true if the item is new to the
-// set.
-func (s *Set) Add(item string) uint {
+// Add adds a new item to the set and returns the number of attemps.
+func (s *Set) Add(item string) int {
 	s.Lock()
 	defer s.Unlock()
 	if v, ok := s.m[item]; ok {
@@ -27,13 +31,24 @@ func (s *Set) Add(item string) uint {
 	return 0
 }
 
-// Add adds a new item to the set and returns true if the item is new to the
-// set.
-func (s *Set) IncFail(item string) {
+// Increments the number of attemps for the given item and returns the attemps
+// number.
+func (s *Set) IncFail(item string) int {
 	s.Lock()
 	defer s.Unlock()
 	if _, ok := s.m[item]; ok {
 		s.m[item]++
+		return s.m[item]
+	}
+	return 0
+}
+
+// Increments the number of attemps for the given item.
+func (s *Set) Set(item string, value int) {
+	s.Lock()
+	defer s.Unlock()
+	if _, ok := s.m[item]; ok {
+		s.m[item] = value
 	}
 }
 
@@ -63,7 +78,7 @@ func (s *Set) Len() int {
 func (s *Set) Clear() {
 	s.Lock()
 	defer s.Unlock()
-	s.m = make(map[string]uint)
+	s.m = make(map[string]int)
 }
 
 func (s *Set) IsEmpty() bool {
