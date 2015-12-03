@@ -1,4 +1,4 @@
-FROM fedora:22
+FROM fedora:23
 MAINTAINER "André Martins <aanm90@gmail.com>"
 
 ADD . /tmp/cilium-build/src/github.com/cilium-team/cilium
@@ -10,7 +10,7 @@ dnf -y install golang openvswitch tcpdump sudo && \
 systemctl disable openvswitch.service && \
 mkdir -p /opt/cilium && \
 GOPATH=/tmp/cilium-build:\
-/tmp/cilium-build/src/github.com/cilium-team/cilium/Godep/_workspace:$GOPATH \
+/tmp/cilium-build/src/github.com/cilium-team/cilium/Godep/_workspace \
 go build -o /opt/cilium/cilium cilium/cilium.go && \
 mv backend /opt/cilium && \
 rm -fr /tmp/cilium-build && \
