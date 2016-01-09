@@ -4,15 +4,12 @@ dir=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
 cd "${dir}/.."
 
 deps=(\
-"bitbucket.org/ww/goautoneg" \
 "github.com/ant0ine/go-json-rest/rest" \
 "github.com/beorn7/perks/quantile" \
-"github.com/cilium-team/elastic-go-logging" \
 "github.com/cilium-team/mergo" \
 "github.com/cilium-team/yaml" \
 "github.com/davecgh/go-spew/spew" \
 "github.com/deckarep/golang-set" \
-"github.com/docker/engine-api" \
 "github.com/ghodss/yaml" \
 "github.com/golang/glog" \
 "github.com/golang/protobuf/proto" \
@@ -33,13 +30,14 @@ deps=(\
 
 special_deps=(\
 "github.com/docker/docker/..." \
+"github.com/docker/engine-api/..." \
 "github.com/docker/libcontainer/..." \
 "github.com/prometheus/common/..." \
 "golang.org/x/crypto/..." \
 "k8s.io/kubernetes/..." \
 )
 
-echo "Pulling necessary images from DockerHub..."
+echo "Updating go dependencies locally..."
 for dep in "${deps[@]}"; do
     echo "Updating: ${dep}"
     go get -u "${dep}"

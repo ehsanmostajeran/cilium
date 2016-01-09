@@ -22,7 +22,7 @@ import (
 
 const (
 	// Version is the current version of Elastic.
-	Version = "3.0.7"
+	Version = "3.0.17"
 
 	// DefaultUrl is the default endpoint of Elasticsearch on the local machine.
 	// It is used e.g. when initializing a new Client without a specific URL.
@@ -906,7 +906,16 @@ func (c *Client) next() (*conn, error) {
 		}
 	}
 
-	// TODO(oe) As a last resort, we could try to awake a dead connection here.
+	// We have a deadlock here: All nodes are marked as dead.
+	// If sniffing is disabled, connections will never be marked alive again.
+	// So we are marking them as alive--if sniffing is disabled.
+	// They'll then be picked up in the next call to PerformRequest.
+	if !c.snifferEnabled {
+		c.errorf("elastic: all %d nodes marked as dead; resurrecting them to prevent deadlock", len(c.conns))
+		for _, conn := range c.conns {
+			conn.MarkAsAlive()
+		}
+	}
 
 	// We tried hard, but there is no node available
 	return nil, ErrNoClient
@@ -1210,8 +1219,15 @@ func (c *Client) IndexGetSettings(indices ...string) *IndicesGetSettingsService 
 }
 
 // Optimize asks Elasticsearch to optimize one or more indices.
+// Optimize is deprecated as of Elasticsearch 2.1 and replaced by Forcemerge.
 func (c *Client) Optimize(indices ...string) *OptimizeService {
 	return NewOptimizeService(c).Index(indices...)
+}
+
+// Forcemerge optimizes one or more indices.
+// It replaces the deprecated Optimize API.
+func (c *Client) Forcemerge(indices ...string) *IndicesForcemergeService {
+	return NewIndicesForcemergeService(c).Index(indices...)
 }
 
 // Refresh asks Elasticsearch to refresh one or more indices.
@@ -1278,13 +1294,28 @@ func (c *Client) IndexDeleteTemplate(name string) *IndicesDeleteTemplateService 
 }
 
 // GetMapping gets a mapping.
-func (c *Client) GetMapping() *GetMappingService {
-	return NewGetMappingService(c)
+func (c *Client) GetMapping() *IndicesGetMappingService {
+	return NewIndicesGetMappingService(c)
 }
 
 // PutMapping registers a mapping.
-func (c *Client) PutMapping() *PutMappingService {
-	return NewPutMappingService(c)
+func (c *Client) PutMapping() *IndicesPutMappingService {
+	return NewIndicesPutMappingService(c)
+}
+
+// GetWarmer gets one or more warmers by name.
+func (c *Client) GetWarmer() *IndicesGetWarmerService {
+	return NewIndicesGetWarmerService(c)
+}
+
+// PutWarmer registers a warmer.
+func (c *Client) PutWarmer() *IndicesPutWarmerService {
+	return NewIndicesPutWarmerService(c)
+}
+
+// DeleteWarmer deletes one or more warmers.
+func (c *Client) DeleteWarmer() *IndicesDeleteWarmerService {
+	return NewIndicesDeleteWarmerService(c)
 }
 
 // -- cat APIs --
@@ -1413,4 +1444,12 @@ func (c *Client) WaitForGreenStatus(timeout string) error {
 // See WaitForStatus for more details.
 func (c *Client) WaitForYellowStatus(timeout string) error {
 	return c.WaitForStatus("yellow", timeout)
+}
+
+// TermVectors returns information and statistics on terms in the fields
+// of a particular document.
+func (c *Client) TermVectors(index, typ string) *TermvectorsService {
+	builder := NewTermvectorsService(c)
+	builder = builder.Index(index).Type(typ)
+	return builder
 }

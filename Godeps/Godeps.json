@@ -7,8 +7,8 @@
 	"Deps": [
 		{
 			"ImportPath": "github.com/ant0ine/go-json-rest/rest",
-			"Comment": "v3.2.0-11-g2af9d00",
-			"Rev": "2af9d0034afcd83101abb1945f2a65ddbd563719"
+			"Comment": "v3.3.0-13-g61ebd16",
+			"Rev": "61ebd1631ca65b0361588dc5b58890f779be234a"
 		},
 		{
 			"ImportPath": "github.com/beorn7/perks/quantile",
@@ -87,7 +87,7 @@
 		},
 		{
 			"ImportPath": "github.com/golang/protobuf/proto",
-			"Rev": "02ac84f19cf2febf53ac06e7fbc446c1ea0258e3"
+			"Rev": "2402d76f3d41f928c7902a765dfc872356dd3aad"
 		},
 		{
 			"ImportPath": "github.com/google/gofuzz",
@@ -103,16 +103,16 @@
 		},
 		{
 			"ImportPath": "github.com/op/go-logging",
-			"Rev": "f2de3fa73ede49624df5ca7467011ac4fcd43635"
+			"Rev": "dfaf3dff9b631bc4236201d90d41ee0de9202889"
 		},
 		{
 			"ImportPath": "github.com/pborman/uuid",
-			"Rev": "cccd189d45f7ac3368a0d127efb7f4d08ae0b655"
+			"Rev": "dee7705ef7b324f27ceb85a121c61f2c2e8ce988"
 		},
 		{
 			"ImportPath": "github.com/prometheus/client_golang/prometheus",
-			"Comment": "0.7.0-66-g8ab2490",
-			"Rev": "8ab2490e0fd478b00ae7464c8eed7e3e4a02f17c"
+			"Comment": "0.7.0-68-g67994f1",
+			"Rev": "67994f177195311c3ea3d4407ed0175e34a4256f"
 		},
 		{
 			"ImportPath": "github.com/prometheus/client_model/go",
@@ -121,15 +121,15 @@
 		},
 		{
 			"ImportPath": "github.com/prometheus/common/expfmt",
-			"Rev": "50022896a67062a54a54f268fb6fe4bf90b34859"
+			"Rev": "0a3005bb37bc411040083a55372e77c405f6464c"
 		},
 		{
 			"ImportPath": "github.com/prometheus/common/internal/bitbucket.org/ww/goautoneg",
-			"Rev": "50022896a67062a54a54f268fb6fe4bf90b34859"
+			"Rev": "0a3005bb37bc411040083a55372e77c405f6464c"
 		},
 		{
 			"ImportPath": "github.com/prometheus/common/model",
-			"Rev": "50022896a67062a54a54f268fb6fe4bf90b34859"
+			"Rev": "0a3005bb37bc411040083a55372e77c405f6464c"
 		},
 		{
 			"ImportPath": "github.com/prometheus/procfs",
@@ -137,28 +137,28 @@
 		},
 		{
 			"ImportPath": "github.com/spf13/pflag",
-			"Rev": "08b1a584251b5b62f458943640fc8ebd4d50aaa5"
+			"Rev": "7f60f83a2c81bc3c3c0d5297f61ddfa68da9d3b7"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/curve25519",
-			"Rev": "beef0f4390813b96e8e68fd78570396d0f4751fc"
+			"Rev": "f23ba3a5ee43012fcb4b92e1a2a405a92554f4f2"
 		},
 		{
 			"ImportPath": "golang.org/x/crypto/ssh",
-			"Rev": "beef0f4390813b96e8e68fd78570396d0f4751fc"
+			"Rev": "f23ba3a5ee43012fcb4b92e1a2a405a92554f4f2"
 		},
 		{
 			"ImportPath": "golang.org/x/net/context",
-			"Rev": "c745c36eab1034bceb7999c915ced45b1f99021f"
+			"Rev": "f1d3149ecb40ffadf4a28d39a30f9a125fe57bdf"
 		},
 		{
 			"ImportPath": "gopkg.in/olivere/elastic.v3",
-			"Comment": "v3.0.7",
-			"Rev": "ec88a89966d87deda1c191c04c09c0c352411c7f"
+			"Comment": "v3.0.17",
+			"Rev": "1f8cbcb3b55a52435e5e35a497a00ccd014c503a"
 		},
 		{
 			"ImportPath": "gopkg.in/yaml.v2",
-			"Rev": "53feefa2559fb8dfa8d81baad31be332c97d6c77"
+			"Rev": "f7716cbe52baa25d2e9b0d0da546fcf909fc16b4"
 		},
 		{
 			"ImportPath": "k8s.io/kubernetes/pkg/api",
