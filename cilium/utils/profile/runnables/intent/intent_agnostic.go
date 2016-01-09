@@ -13,23 +13,27 @@ import (
 	upl "github.com/cilium-team/cilium/cilium/utils/plugins/loadbalancer"
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 	upsi "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/intent"
+
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types/strslice"
 )
 
-func addArgumentsToCmd(intent *upsi.Intent, cmd []string) []string {
+func addArgumentsToCmd(intent *upsi.Intent, cmd *strslice.StrSlice) *strslice.StrSlice {
 	if intent.AddArguments == nil || len(*intent.AddArguments) == 0 {
 		return cmd
 	}
+	cmdSlice := cmd.Slice()
 	//Replacing with special keywords
 	for _, v := range *intent.AddArguments {
 		str := v
 		if strings.Contains(v, "$public-ip") {
 			str = strings.Replace(v, "$public-ip", os.Getenv("HOST_IP"), -1)
 		}
-		cmd = append(cmd, str)
+		cmdSlice = append(cmdSlice, str)
 	}
+	cmdToReturn := strslice.New(cmdSlice...)
 	log.Debug("intent %#v", intent)
-	log.Debug("cmd, %+v", cmd)
-	return cmd
+	log.Debug("cmd, %+v", cmdToReturn)
+	return cmdToReturn
 }
 
 func hostnameIs(intent *upsi.Intent, labels map[string]string, oldHostName string) string {

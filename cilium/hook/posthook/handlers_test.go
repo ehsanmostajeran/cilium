@@ -16,7 +16,7 @@ import (
 	uprd "github.com/cilium-team/cilium/cilium/utils/profile/runnables/docker"
 	upri "github.com/cilium-team/cilium/cilium/utils/profile/runnables/intent"
 
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	dtypes "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types"
 )
 
 var (
@@ -122,7 +122,7 @@ func TestPostHook(t *testing.T) {
 		}, nil
 	}
 
-	var expected d.Container
+	var expected dtypes.ContainerJSON
 	err := json.Unmarshal([]byte(jsonContainer), &expected)
 	if err != nil {
 		t.Fatal(err)
@@ -175,7 +175,7 @@ func TestPostHookInvalid(t *testing.T) {
 		return nil, fmt.Errorf("unable to connect DB")
 	}
 
-	var expected d.Container
+	var expected dtypes.ContainerJSON
 	err := json.Unmarshal([]byte(jsonContainer), &expected)
 	if err != nil {
 		t.Fatal(err)

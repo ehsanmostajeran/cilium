@@ -12,25 +12,25 @@ import (
 	upsi "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/intent"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/deckarep/golang-set"
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	dtypes "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types"
 )
 
 func preHookDockerDaemonCreate(conn ucdb.Db, intent *upsi.Intent, containerConfig *m.DockerCreateConfig) error {
 	log.Debug("intent %#v", intent)
 	log.Debug("container config %+v", containerConfig.Config)
-	if len(containerConfig.Labels) == 0 {
+	if len(containerConfig.Config.Labels) == 0 {
 		return nil
 	}
 
 	//intent.AddArguments
-	containerConfig.Cmd = addArgumentsToCmd(intent, containerConfig.Cmd)
+	containerConfig.Config.Cmd = addArgumentsToCmd(intent, containerConfig.Config.Cmd)
 	return nil
 }
 
 func preHookDockerSwarmCreate(conn ucdb.Db, intent *upsi.Intent, containerConfig *m.DockerCreateConfig) error {
 	log.Debug("intent %#v", intent)
 	log.Debug("container config %+v", containerConfig.Config)
-	if len(containerConfig.Labels) == 0 {
+	if len(containerConfig.Config.Labels) == 0 {
 		return nil
 	}
 	docker, err := uc.NewDockerClient()
@@ -39,14 +39,14 @@ func preHookDockerSwarmCreate(conn ucdb.Db, intent *upsi.Intent, containerConfig
 	}
 
 	//intent.MaxScale
-	if err := maxScaleDocker(docker, intent, containerConfig.Labels); err != nil {
+	if err := maxScaleDocker(docker, intent, containerConfig.Config.Labels); err != nil {
 		return err
 	}
 
 	//intent.HostnameIs
-	log.Debug("containerConfig.Hostname %+v", containerConfig.Hostname)
-	containerConfig.Hostname = hostnameIs(intent, containerConfig.Labels, containerConfig.Hostname)
-	log.Debug("containerConfig.Hostname %+v", containerConfig.Hostname)
+	log.Debug("containerConfig.Hostname %+v", containerConfig.Config.Hostname)
+	containerConfig.Config.Hostname = hostnameIs(intent, containerConfig.Config.Labels, containerConfig.Config.Hostname)
+	log.Debug("containerConfig.Hostname %+v", containerConfig.Config.Hostname)
 
 	//intent.RemoveDockerLinks
 	if err := removeDockerLinksDocker(conn, intent, containerConfig); err != nil {
@@ -64,7 +64,7 @@ func preHookDockerSwarmCreate(conn ucdb.Db, intent *upsi.Intent, containerConfig
 func postHookDockerDaemonStart(dbConn ucdb.Db, intent *upsi.Intent, containerConfig *m.DockerCreateConfig) error {
 	log.Debug("intent: %#v", intent)
 	log.Debug("container config %+v", containerConfig.Config)
-	if len(containerConfig.Labels) == 0 {
+	if len(containerConfig.Config.Labels) == 0 {
 		return nil
 	}
 
@@ -74,7 +74,7 @@ func postHookDockerDaemonStart(dbConn ucdb.Db, intent *upsi.Intent, containerCon
 	}
 
 	//Update configurations for special containers
-	saveCiliumServices(dbConn, containerConfig.Labels)
+	saveCiliumServices(dbConn, containerConfig.Config.Labels)
 
 	return nil
 }
@@ -84,17 +84,13 @@ func maxScaleDocker(docker uc.Docker, intent *upsi.Intent, labels map[string]str
 	if svcName == "" {
 		return nil
 	}
-	containers, err := docker.ListContainers(d.ListContainersOptions{All: true})
+	containers, err := docker.ContainerList(dtypes.ContainerListOptions{All: true})
 	if err != nil {
 		return err
 	}
 	instancesRunning := 0
-	for _, container := range containers {
-		dockerContainer, err := docker.InspectContainer(container.ID)
-		if err != nil {
-			return err
-		}
-		dockerServiceName := u.LookupServiceName(dockerContainer.Config.Labels)
+	for _, dockerContainer := range containers {
+		dockerServiceName := u.LookupServiceName(dockerContainer.Labels)
 		if dockerServiceName != "" && svcName == dockerServiceName {
 			instancesRunning++
 			log.Debug("intent.MaxScale  %+v", intent.MaxScale)
@@ -155,14 +151,14 @@ func netConfDocker(dbConn ucdb.Db, intent *upsi.Intent, containerConfig *m.Docke
 	}
 
 	//Save this container's endpoint
-	if err := saveEndpoint(dbConn, intent, containerConfig.Labels, containerConfig.ID, ifname, []net.IP{ip}, []string{mac}); err != nil {
+	if err := saveEndpoint(dbConn, intent, containerConfig.Config.Labels, containerConfig.ID, ifname, []net.IP{ip}, []string{mac}); err != nil {
 		dbConn.DeleteIP(ip)
 		log.Error("Fail while saving up endpoint for container %s: %s", containerConfig.ID, err)
 		return err
 	}
 
 	//intent.AddToDNS
-	if err := addToDNS(dbConn, intent, containerConfig.Labels, containerConfig.ID, []net.IP{ip}); err != nil {
+	if err := addToDNS(dbConn, intent, containerConfig.Config.Labels, containerConfig.ID, []net.IP{ip}); err != nil {
 		dbConn.DeleteEndpoint(containerConfig.ID)
 		dbConn.DeleteIP(ip)
 		log.Error("Fail while setting up DNS entries for container %s: %s", containerConfig.ID, err)
@@ -185,7 +181,7 @@ func netConfDocker(dbConn ucdb.Db, intent *upsi.Intent, containerConfig *m.Docke
 
 	//intent.LoadBalancer
 	if err := addToLoadBalancer(dbConn, intent, []net.IP{ip}, containerConfig.ID,
-		containerConfig.Name, containerConfig.Labels); err != nil {
+		containerConfig.Name, containerConfig.Config.Labels); err != nil {
 
 		log.Error("Fail while adding container to load balancer %s: %s", containerConfig.ID, err)
 	}

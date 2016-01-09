@@ -13,7 +13,9 @@ import (
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	dclient "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/client"
+	dtypes "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types/container"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 )
 
@@ -84,7 +86,7 @@ func defaultRequest(cont []byte) (m.Response, error) {
 		return &PowerstripPostHookResponse{}, err
 	}
 
-	var clientBody d.Config
+	var clientBody container.Config
 	if err := pphreq.UnmarshalClientBody(&clientBody); err != nil {
 		return &PowerstripPostHookResponse{}, err
 	}
@@ -109,24 +111,23 @@ func getDockerIDFrom(req string) string {
 
 // getDockerContainer gets the container information from docker, if the
 // container doesn't exist it retries 10 more times before giving up.
-func (p PostHook) getDockerContainer(containerID string) (*d.Container, error) {
+func (p PostHook) getDockerContainer(containerID string) (dtypes.ContainerJSON, error) {
 	var (
-		dockerContainer *d.Container
+		dockerContainer dtypes.ContainerJSON
 		err             error
 	)
 	attempts := 1
 	maxAttempds := 10
 	for attempts <= maxAttempds {
-		dockerContainer, err = p.dockerConn.InspectContainer(containerID)
+		dockerContainer, err = p.dockerConn.ContainerInspect(containerID)
 		if err != nil {
-			e := d.NoSuchContainer{ID: containerID}
-			if err.Error() == e.Error() {
+			if dclient.IsErrContainerNotFound(err) {
 				log.Info("Container %s not found, attempt %d/%d...", containerID, attempts, maxAttempds)
 				const delay = 3 * time.Second
 				time.Sleep(delay)
 				attempts++
 			} else {
-				return nil, err
+				return dtypes.ContainerJSON{}, err
 			}
 		} else {
 			return dockerContainer, nil
@@ -177,7 +178,7 @@ func (p PostHook) postHookDocker(endPoint string, pphreq PowerstripPostHookReque
 		return &PowerstripPostHookResponse{}, err
 	}
 
-	createConfig := m.NewDockerCreateConfigFromDockerContainer(*dockerContainer)
+	createConfig := m.NewDockerCreateConfigFromDockerContainer(dockerContainer)
 
 	if createConfig.Config == nil || createConfig.Config.Labels == nil {
 		log.Info("Request has empty config or empty labels.")

@@ -5,10 +5,10 @@ import (
 	"sort"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/mergo"
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types/container"
 )
 
-type HostConfig d.HostConfig
+type HostConfig container.HostConfig
 
 // Value marshals the receiver HostConfig into a json string.
 func (hc HostConfig) Value() (string, error) {
@@ -41,7 +41,7 @@ type DockerConfig struct {
 	Priority   int        `json:"priority,omitempty" yaml:"priority,omitempty"`
 }
 
-type Config d.Config
+type Config container.Config
 
 // Value marshals the receiver Config into a json string.
 func (c Config) Value() (string, error) {

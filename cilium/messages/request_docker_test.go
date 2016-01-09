@@ -6,32 +6,39 @@ import (
 	"strings"
 	"testing"
 
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	dtypes "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types/container"
 )
 
 var (
-	validContainer = d.Container{
-		Name:       "hello world",
-		Config:     &validConfig,
-		HostConfig: &validHostConfig,
+	cjb = dtypes.ContainerJSONBase{
 		ID:         validContainerID,
-		State: d.State{
+		Name:       "hello world",
+		HostConfig: &validHostConfig,
+		State: &dtypes.ContainerState{
 			Pid: 1245,
 		},
 	}
-	validConfig = d.Config{
-		DNS: []string{"1.2.3.4"},
+	validContainer = dtypes.ContainerJSON{
+		ContainerJSONBase: &cjb,
+		Config:            &validConfig,
 	}
-	validHostConfig = d.HostConfig{
-		Memory: 123456,
+	validConfig = container.Config{
+		MacAddress: "01:23:45:67:89:AB",
+	}
+	validHostConfig = container.HostConfig{
+		DNS: []string{"1.2.3.4"},
+		Resources: container.Resources{
+			Memory: 123456,
+		},
 	}
 	validContainerID = `6b27a943823d0f735346861bbce6e24acdaf435edb259748be556300d1c361f3`
-	validSimpleBody  = `{\"Hostname\":\"myhostname\",\"ExposedPorts\":{\"53/udp\":{},` +
-		`\"80/tcp\":{}},\"Cmd\":null,\"Image\":\"fooandbar\",\"Entrypoint\":null,` +
-		`\"Labels\":{\"codocker.swarid\":\"123456\"},` +
-		`\"HostConfig\":{\"PortBindings\":{\"53/udp\":[{\"HostPort\":\"53\"}],` +
-		`\"80/tcp\":[{\"HostPort\":\"80\"}]},\"Dns\":[\"8.8.8.8\",\"8.8.4.4\"],` +
-		`\"NetworkMode\":\"bridge\",\"RestartPolicy\":{\"Name\":\"no\"},\"LogConfig\":{}}}`
+	validSimpleBody  = `{\"Hostname\":\"myhostname\",\"ExposedPorts\":{\"53/udp\":` +
+		`{},\"80/tcp\":{}},\"Image\":\"fooandbar\",\"Labels\":{\"codocker.swarid\":` +
+		`\"123456\"},\"HostConfig\":{\"LogConfig\":{},\"NetworkMode\":\"bridge\",` +
+		`\"PortBindings\":{\"53/udp\":[{\"HostIp\":\"\",\"HostPort\":\"53\"}],\"80/tcp\":` +
+		`[{\"HostIp\":\"\",\"HostPort\":\"80\"}]},\"RestartPolicy\":{\"Name\":\"no\"},` +
+		`\"Dns\":[\"8.8.8.8\",\"8.8.4.4\"],\"ConsoleSize\":[0,0]}}`
 	validSimpleRequest = `{"Type": ` + validType + `, "PowerstripProtocolVersion": ` +
 		strconv.Itoa(validPPV) + `, "ClientRequest": {"Body": "` + validSimpleBody + `", ` +
 		`"Request": ` + validRequestHeader + `, "Method": "` + validMethod + `"}}`
@@ -112,8 +119,8 @@ func TestDockerUnmarshalCreateClientBody(t *testing.T) {
 	if cc.Name != "/hello-world" {
 		t.Errorf("invalid unmarshalling:\ngot  %s\nwant %s", cc.Name, "/hello-world")
 	}
-	if cc.Hostname != "myhostname" {
-		t.Errorf("invalid unmarshalling:\ngot  %s\nwant %s", cc.Hostname, "myhostname")
+	if cc.Config.Hostname != "myhostname" {
+		t.Errorf("invalid unmarshalling:\ngot  %s\nwant %s", cc.Config.Hostname, "myhostname")
 	}
 }
 
@@ -123,7 +130,7 @@ func TestDockerUnmarshalClientBody(t *testing.T) {
 	if err != nil {
 		t.Fatal("invalid request message:", err)
 	}
-	var dc d.Config
+	var dc container.Config
 	err = powerStripReq.UnmarshalClientBody(&dc)
 	if err != nil {
 		t.Fatal("invalid request:", err)

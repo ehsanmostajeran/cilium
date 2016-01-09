@@ -1,13 +1,15 @@
 package posthook
 
 import (
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 
 	uc "github.com/cilium-team/cilium/cilium/utils/comm"
 
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	dclient "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/client"
 )
 
 var jsonContainer = `{
@@ -154,11 +156,13 @@ var jsonContainer = `{
 
 type FakeDocker uc.Docker
 
-func newMockDockerClient(fdc *FakeDockerClient) *d.Client {
-	dc, _ := d.NewClient("http://localhost:8080")
-	dc.HTTPClient = &http.Client{Transport: fdc}
-	dc.SkipServerVersionCheck = true
-	return dc
+func newMockDockerClient(fdc *FakeDockerClient) *dclient.Client {
+	defaultHeaders := map[string]string{"User-Agent": "engine-api-cli-1.0"}
+	cli, _ := dclient.NewClient("http://localhost:8080", "v1.21", nil, defaultHeaders)
+	// fix me: wait for https://github.com/docker/engine-api/issues/24
+	//	cli.htt HTTPClient = &http.Client{Transport: fdc}
+	//	cli.SkipServerVersionCheck = true
+	return cli
 }
 
 type FakeDockerClient struct {
@@ -166,6 +170,13 @@ type FakeDockerClient struct {
 	status   int
 	header   map[string]string
 	requests []*http.Request
+}
+
+func errorResponseTestServer(statusCode int, content string) *httptest.Server {
+	return httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(statusCode)
+		fmt.Fprintln(w, content)
+	}))
 }
 
 func (fdc *FakeDockerClient) RoundTrip(r *http.Request) (*http.Response, error) {

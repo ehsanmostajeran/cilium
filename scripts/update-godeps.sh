@@ -12,7 +12,7 @@ deps=(\
 "github.com/cilium-team/yaml" \
 "github.com/davecgh/go-spew/spew" \
 "github.com/deckarep/golang-set" \
-"github.com/fsouza/go-dockerclient" \
+"github.com/docker/engine-api" \
 "github.com/ghodss/yaml" \
 "github.com/golang/glog" \
 "github.com/golang/protobuf/proto" \
@@ -24,7 +24,6 @@ deps=(\
 "github.com/prometheus/client_golang/prometheus" \
 "github.com/prometheus/client_model/go" \
 "github.com/prometheus/procfs" \
-"github.com/samalba/dockerclient" \
 "github.com/spf13/pflag" \
 "golang.org/x/net/context" \
 "gopkg.in/olivere/elastic.v3" \

@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bufio"
+	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -22,9 +25,8 @@ import (
 	uprk "github.com/cilium-team/cilium/cilium/utils/profile/runnables/kubernetes"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/ant0ine/go-json-rest/rest"
-	dfsouza "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	dtypes "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/samalba/dockerclient"
 )
 
 var (
@@ -56,15 +58,15 @@ const (
 )
 
 func init() {
-
-	flag.StringVar(&logLevel, "l", "info", "Set log level, valid options are (debug|info|warning|error|fatal|panic)")
-	flag.StringVar(&filename, "f", "", "Configuration file or directory containing configuration files that will be written in the distributed database (Accepted formats: ProfileFile, DNSConfig and HA-ProxyConfig)")
-	flag.BoolVar(&deleteDB, "D", false, "Deletes all information inside database")
-	flag.BoolVar(&flushConfig, "F", false, "Clear configuration but keep state in database")
-	flag.BoolVar(&events, "e", true, "Listens for docker events so it can automatically clean IPs and configurations used by stopped and deleted containers.")
-	flag.BoolVar(&listOnlyForEvents, "o", false, "Listen mode only. It only listens for events from a particular docker daemon.")
-	flag.IntVar(&port, "P", 8080, "Cilium's listening port.")
-	flag.Parse()
+	mainFlagSet := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	mainFlagSet.StringVar(&logLevel, "l", "info", "Set log level, valid options are (debug|info|warning|error|fatal|panic)")
+	mainFlagSet.StringVar(&filename, "f", "", "Configuration file or directory containing configuration files that will be written in the distributed database (Accepted formats: ProfileFile, DNSConfig and HA-ProxyConfig)")
+	mainFlagSet.BoolVar(&deleteDB, "D", false, "Deletes all information inside database")
+	mainFlagSet.BoolVar(&flushConfig, "F", false, "Clear configuration but keep state in database")
+	mainFlagSet.BoolVar(&events, "e", true, "Listens for docker events so it can automatically clean IPs and configurations used by stopped and deleted containers.")
+	mainFlagSet.BoolVar(&listOnlyForEvents, "o", false, "Listen mode only. It only listens for events from a particular docker daemon.")
+	mainFlagSet.IntVar(&port, "P", 8080, "Cilium's listening port.")
+	mainFlagSet.Parse(os.Args[1:])
 
 	if len(filename) == 0 {
 		setupRunnables()
@@ -174,7 +176,7 @@ func main() {
 		log.Error("%+v", err)
 	}
 	if events {
-		dockerclient, err := uc.NewDockerClientSamalba()
+		dockerclient, err := uc.NewDockerClient()
 		if err != nil {
 			log.Error("Error: %s", err)
 			return
@@ -182,14 +184,14 @@ func main() {
 
 		log.Info("Trying to get docker client info")
 		wait := 1 * time.Second
-		retries := 10
+		retries := 5
 		for {
-			log.Info("Attempt %d...", 11-retries)
+			log.Info("Attempt %d...", 6-retries)
 			if _, err := dockerclient.Info(); err == nil {
 				break
 			}
 			if retries < 0 {
-				log.Error("Unable to monitor for events on the given docker client")
+				log.Error("Unable to monitor for events on the given docker client: ", err)
 				return
 			}
 			time.Sleep(wait)
@@ -198,7 +200,12 @@ func main() {
 		}
 		log.Info("Connection successful")
 
-		dockerclient.StartMonitorEvents(listenForEvents, nil, dbConn)
+		eo := dtypes.EventsOptions{Since: strconv.FormatInt(time.Now().Unix(), 10)}
+		r, err := dockerclient.Events(eo)
+		if err != nil {
+			log.Error("Error %s...", err)
+		}
+		go listenForEvents(r, dbConn)
 
 		if listOnlyForEvents {
 			wg.Add(1)
@@ -290,50 +297,72 @@ func RequestsHandler(baseAddr string, w rest.ResponseWriter, req *rest.Request) 
 	}
 }
 
-func listenForEvents(event *d.Event, ec chan error, args ...interface{}) {
-	if event != nil {
-		go func(event d.Event) {
-			dbConn := args[0].(ucdb.Db)
-			log.Debug("Msg received listen only %s", event)
-			switch event.Status {
-			case "create":
-				maxAttemps := 3
-				if containersInCache.Add(event.Id) < maxAttemps {
-					log.Info("Adding endpoint for %s", event.Id)
-					if err := u.AddEndpoint(dbConn, event.Id); err != nil {
-						if attemps := containersInCache.IncFail(event.Id); attemps >= maxAttemps {
-							containersInCache.Set(event.Id, u.Failed)
-						}
-					} else {
-						containersInCache.Set(event.Id, u.Configured)
-					}
+type Event struct {
+	Id     string
+	Status string
+	From   string
+	Time   int64
+}
+
+func ParseEvent(eventStr string) Event {
+	log.Info("Event received: %+v", eventStr)
+	var e Event
+	if err := json.Unmarshal([]byte(eventStr), &e); err != nil {
+		log.Error("Error while unmarshalling event %+v", e)
+	}
+	return e
+}
+
+func listenForEvents(reader io.ReadCloser, dbConn ucdb.Db) {
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		e := ParseEvent(scanner.Text())
+		go processEvent(e, dbConn)
+	}
+	if err := scanner.Err(); err != nil {
+		log.Error("Error while reading events: %+v", err)
+	}
+}
+
+func processEvent(event Event, dbConn ucdb.Db) {
+	log.Debug("Msg received listen only %s", event)
+	switch event.Status {
+	case "create":
+		maxAttemps := 3
+		if containersInCache.Add(event.Id) < maxAttemps {
+			log.Info("Adding endpoint for %s", event.Id)
+			if err := u.AddEndpoint(dbConn, event.Id); err != nil {
+				if attemps := containersInCache.IncFail(event.Id); attemps >= maxAttemps {
+					containersInCache.Set(event.Id, u.Failed)
 				}
-			case "start":
-			case "stop":
-				fallthrough
-			case "destroy":
-				fallthrough
-			case "die":
-				if containersInCache.Remove(event.Id) {
-					log.Info("Removing endpoint for %s", event.Id)
-					// Only local will be allowed to remove entries
-					if event.From == "node:"+os.Getenv("HOSTNAME") ||
-						event.From == "self" {
-						if containerIPs, err := dbConn.GetEndpoint(event.Id); err == nil {
-							for _, ip := range containerIPs.IPs {
-								dbConn.DeleteIP(ip)
-							}
-							u.RemoveLocalEndpoint(dbConn, event.Id)
-							dbConn.DeleteEndpoint(event.Id)
-						}
+			} else {
+				containersInCache.Set(event.Id, u.Configured)
+			}
+		}
+	case "start":
+	case "stop":
+		fallthrough
+	case "destroy":
+		fallthrough
+	case "die":
+		if containersInCache.Remove(event.Id) {
+			log.Info("Removing endpoint for %s", event.Id)
+			// Only local will be allowed to remove entries
+			if event.From == "node:"+os.Getenv("HOSTNAME") ||
+				event.From == "self" {
+				if containerIPs, err := dbConn.GetEndpoint(event.Id); err == nil {
+					for _, ip := range containerIPs.IPs {
+						dbConn.DeleteIP(ip)
 					}
-					/*if haProxyClient, err := dbConn.GetHAProxyConfig(); err == nil {
-						haProxyClient.DeleteBackend(event.Id)
-					}*/
-					u.RemoveEndpoint(event.Id)
+					u.RemoveLocalEndpoint(dbConn, event.Id)
+					dbConn.DeleteEndpoint(event.Id)
 				}
 			}
-		}(*event)
+			/*if haProxyClient, err := dbConn.GetHAProxyConfig(); err == nil {
+				haProxyClient.DeleteBackend(event.Id)
+			}*/
+			u.RemoveEndpoint(event.Id)
+		}
 	}
 }
 
@@ -342,18 +371,18 @@ func updateEndpoints(dClient uc.Docker, dbConn ucdb.Db) error {
 	if err != nil {
 		return err
 	}
-	allContainers, err := dClient.ListContainers(dfsouza.ListContainersOptions{All: false})
+	allContainers, err := dClient.ContainerList(dtypes.ContainerListOptions{All: false})
 	if err != nil {
 		return err
 	}
 	for _, container := range allContainers {
-		event := d.Event{
+		event := Event{
 			Id:     container.ID,
 			Status: "create",
 			From:   "self",
 			Time:   time.Now().Unix(),
 		}
-		listenForEvents(&event, nil, dbConn)
+		go processEvent(event, dbConn)
 	}
 	return nil
 }

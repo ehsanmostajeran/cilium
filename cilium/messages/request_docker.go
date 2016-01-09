@@ -5,21 +5,22 @@ import (
 	"net/url"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/cilium-team/mergo"
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	dtypes "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types/container"
 )
 
 type DockerCreateConfig struct {
 	Name string `json:"-" yaml:"-"`
-	*d.Config
-	ID         string        `json:"-" yaml:"-"`
-	State      *d.State      `json:"-" yaml:"-"`
-	HostConfig *d.HostConfig `json:"HostConfig,omitempty" yaml:"HostConfig,omitempty"`
+	*container.Config
+	ID         string                 `json:"-" yaml:"-"`
+	State      *dtypes.ContainerState `json:"-" yaml:"-"`
+	HostConfig *container.HostConfig  `json:"HostConfig,omitempty" yaml:"HostConfig,omitempty"`
 }
 
 // NewDockerCreateConfigFromDockerContainer creates a CreateConfig from the
 // giving go-dockerclient Container it makes a deep copy of the Config and
 // HostConfig pointers in go-dockerclient Container
-func NewDockerCreateConfigFromDockerContainer(container d.Container) DockerCreateConfig {
+func NewDockerCreateConfigFromDockerContainer(container dtypes.ContainerJSON) DockerCreateConfig {
 	config := *container.Config
 	hostConfig := *container.HostConfig
 	state := container.State
@@ -28,7 +29,7 @@ func NewDockerCreateConfigFromDockerContainer(container d.Container) DockerCreat
 		ID:         container.ID,
 		Config:     &config,
 		HostConfig: &hostConfig,
-		State:      &state,
+		State:      state,
 	}
 }
 
@@ -106,7 +107,7 @@ func (cc *DockerCreateConfig) Marshal2JSONStr() (string, error) {
 
 // UnmarshalClientBody unmarshals the PowerstripRequest into a go-dockerclient
 // Config.
-func (p PowerstripRequest) UnmarshalClientBody(config *d.Config) error {
+func (p PowerstripRequest) UnmarshalClientBody(config *container.Config) error {
 	if p.ClientRequest.Body == "" {
 		return nil
 	}

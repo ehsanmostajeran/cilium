@@ -37,10 +37,11 @@ var (
 	validRequest = `{"Type": ` + validType + `, "PowerstripProtocolVersion": ` +
 		strconv.Itoa(validPPV) + `, "ClientRequest": {"Body": "` + validBody + `", ` +
 		`"Request": ` + validDockerRequestHeader + `, "Method": "` + validMethod + `"}}`
-	validWantBodyWoutEscQuot = `{"Hostname":"myhostname","ExposedPorts":{"53/udp":{},"80/tcp":{}},` +
-		`"Cmd":null,"Image":"fooandbar","Entrypoint":null,"Labels":{"com.docker.swarm.id":"123456"},` +
-		`"HostConfig":{"PortBindings":{"53/udp":[{"HostPort":"53"}],"80/tcp":[{"HostPort":"80"}]},` +
-		`"Dns":["1.2.3.4"],"NetworkMode":"bridge","RestartPolicy":{"Name":"no"},"LogConfig":{}}}`
+	validWantBodyWoutEscQuot = `{"Hostname":"myhostname","ExposedPorts":` +
+		`{"53/udp":{},"80/tcp":{}},"Image":"fooandbar","Labels":{"com.docker.swarm.id":` +
+		`"123456"},"HostConfig":{"LogConfig":{},"NetworkMode":"bridge","PortBindings":` +
+		`{"53/udp":[{"HostIp":"","HostPort":"53"}],"80/tcp":[{"HostIp":"","HostPort":"80"}]},` +
+		`"RestartPolicy":{"Name":"no"},"Dns":["1.2.3.4"],"ConsoleSize":[0,0],"OomKillDisable":false}}`
 	validBodyWoutEscQuot                 = strings.Replace(validBody, `\"`, `"`, -1)
 	validDockerRequestHeaderWoutQuot     = strings.Replace(validDockerRequestHeader, `"`, ``, -1)
 	validKubernetesRequestHeaderWoutQuot = strings.Replace(validKubernetesRequestHeader, `"`, ``, -1)
@@ -126,14 +127,14 @@ func TestPreHook(t *testing.T) {
 
 	upr.Register(uprd.Name, uprd.DockerRunnable{})
 
-	defaultPPHR, err := ph.preHook(uprd.DockerSwarmCreate, []byte(validRequest))
+	modifiedPPHR, err := ph.preHook(uprd.DockerSwarmCreate, []byte(validRequest))
 	if err != nil {
 		t.Error("error occured while executing preHook", err)
 	}
-	pphr, ok := defaultPPHR.(*PowerstripPreHookResponse)
+	pphr, ok := modifiedPPHR.(*PowerstripPreHookResponse)
 	if !ok {
 		t.Fatalf("invalid returned value:\ngot  %s\nwant %s",
-			reflect.TypeOf(defaultPPHR),
+			reflect.TypeOf(modifiedPPHR),
 			"*PowerstripPreHookResponse",
 		)
 	}

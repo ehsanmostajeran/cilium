@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	wanthcjson = `{"Dns":["1.1.0.252"],"NetworkMode":"none","RestartPolicy":{},"LogConfig":{"Type":"json-file"}}`
-	hcjson     = `{
+	wanthcjson = `{"LogConfig":{"Type":"json-file"},"NetworkMode":"none",` +
+		`"RestartPolicy":{},"Dns":["1.1.0.252"],"ConsoleSize":[0,0],"OomKillDisable":false}`
+	hcjson = `{
         "Binds": null,
         "ContainerIDFile": "",
         "LxcConf": null,
@@ -53,7 +54,7 @@ var (
 		`["PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",` +
 		`"LANG=C.UTF-8","PYTHON_VERSION=2.7.10","PYTHON_PIP_VERSION=7.1.0"],` +
 		`"Cmd":["python","app.py"],"Image":"compose_web","WorkingDir":"/code",` +
-		`"Entrypoint":null,"Labels":{"com.docker.compose.config-hash":` +
+		`"Labels":{"com.docker.compose.config-hash":` +
 		`"86f0ff063d4b5f5015cd95ff6e0f7688a925d95c8244f966029b64887f84bb06",` +
 		`"com.docker.compose.container-number":"1","com.docker.compose.oneoff":` +
 		`"False","com.docker.compose.project":"compose","com.docker.compose.service":` +
@@ -192,11 +193,11 @@ func TestDockerOverwriteWith(t *testing.T) {
 		t.Fatalf("error while unmarshalling cjson: %s", err)
 	}
 	c1.MacAddress = "00:01:02:03:04:05"
-	c2.DNS = []string{"8.8.8.8"}
+	c2.Env = []string{"foo=bar"}
 	c2.Labels = nil
 	c2.MacAddress = ""
 	cwant.MacAddress = "00:01:02:03:04:05"
-	cwant.DNS = []string{"8.8.8.8"}
+	cwant.Env = []string{"foo=bar"}
 	if err := c1.OverwriteWith(c2); err != nil {
 		t.Errorf("error while executing OverwriteWith of Config: %s", err)
 	}

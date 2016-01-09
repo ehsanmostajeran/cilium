@@ -25,14 +25,13 @@ policy-source:
         docker-config:
           priority: 1000
           config:
-            Hostname: "dns"
-            Env:
+            hostname: "dns"
+            env:
               - "affinity:image==cilium/docker-dns-rest:latest"
               - "affinity:com.intent.service==gov_swarm_events"
           host-config:
-            Hostname: "dns"
-            NetworkMode: "bridge"
-            Dns:
+            networkmode: "bridge"
+            dns:
               - "8.8.8.8"
               - "8.8.4.4"
       -
@@ -52,11 +51,10 @@ policy-source:
         docker-config:
           priority: 1000
           config:
-            Hostname: "haproxy"
+            hostname: "haproxy"
           host-config:
-            Hostname: "haproxy"
-            NetworkMode: "bridge"
-            Dns:
+            networkmode: "bridge"
+            dns:
               - "8.8.8.8"
               - "8.8.4.4"
       -
@@ -72,8 +70,8 @@ policy-source:
             hostname-is:
               value-of-label: ^com\.intent\.logical-name$
         host-config:
-          RestartPolicy:
-            Name: "always"
+          restartpolicy:
+            name: "always"
       -
         name: "Elastic search config"
         coverage:
@@ -88,9 +86,9 @@ policy-source:
             add-to-dns: false
         docker-config:
           host-config:
-            NetworkMode: "host"
-            RestartPolicy:
-              Name: "always"
+            networkmode: "host"
+            restartpolicy:
+              name: "always"
       -
         name: "Workload defaults for compose"
         coverage:
@@ -108,8 +106,8 @@ policy-source:
               value-of-label: ^com\.docker\.compose\.service$
         docker-config:
           host-config:
-            NetworkMode: "none"
-            Dns:
+            networkmode: "none"
+            dns:
               - "1.1.0.252"
       -
         name: "Debug Shell"
@@ -131,6 +129,6 @@ policy-source:
         docker-config:
           priority: 800
           host-config:
-            NetworkMode: "none"
-            Dns:
+            networkmode: "none"
+            dns:
               - "1.1.0.252"

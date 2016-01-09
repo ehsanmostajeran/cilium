@@ -23,7 +23,6 @@ import (
 	"strconv"
 	"testing"
 
-	docker "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api/registered"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/api/resource"
@@ -33,6 +32,7 @@ import (
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/runtime"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/types"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/k8s.io/kubernetes/pkg/util"
+	docker "github.com/fsouza/go-dockerclient"
 	"k8s.io/kubernetes/pkg/apis/extensions"
 
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/google/gofuzz"

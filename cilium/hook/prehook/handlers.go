@@ -11,7 +11,7 @@ import (
 	up "github.com/cilium-team/cilium/cilium/utils/profile"
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types/container"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 )
 
@@ -75,7 +75,7 @@ func defaultRequest(cont []byte) (m.Response, error) {
 		return PowerstripPreHookResponse{}, err
 	}
 
-	var clientBody d.Config
+	var clientBody container.Config
 	if err := pphreq.UnmarshalClientBody(&clientBody); err != nil {
 		return PowerstripPreHookResponse{}, err
 	}

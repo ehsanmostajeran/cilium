@@ -5,7 +5,7 @@ import (
 	"net"
 	"regexp"
 
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/go-connections/nat"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 )
 
@@ -82,11 +82,9 @@ func (cl *ContainerLinks) Scan(input string) error {
 	return json.Unmarshal([]byte(input), cl)
 }
 
-type PortBindings map[d.Port][]d.PortBinding
-
 type ContainerPortBindings struct {
-	Container    string       `json:"container,omitempty" yaml:"container,omitempty"`
-	PortBindings PortBindings `json:"port-bindings,omitempty" yaml:"port-bindings,omitempty"`
+	Container    string      `json:"container,omitempty" yaml:"container,omitempty"`
+	PortBindings nat.PortMap `json:"port-bindings,omitempty" yaml:"port-bindings,omitempty"`
 }
 
 // Value marshals the receiver ContainerPortBindings into a json string.

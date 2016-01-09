@@ -7,7 +7,7 @@ import (
 	upr "github.com/cilium-team/cilium/cilium/utils/profile/runnables"
 	upsd "github.com/cilium-team/cilium/cilium/utils/profile/subpolicies/docker"
 
-	d "github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/fsouza/go-dockerclient"
+	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/docker/engine-api/types/container"
 	"github.com/cilium-team/cilium/Godeps/_workspace/src/github.com/op/go-logging"
 )
 
@@ -87,9 +87,10 @@ func (dr DockerRunnable) GetRunnableFrom(users []up.User, policies []up.PolicySo
 }
 
 func (dr DockerRunnable) DockerExec(hookType, reqType string, db ucdb.Db, cc *m.DockerCreateConfig) error {
-	cc.MergeWithOverwrite(m.DockerCreateConfig{
-		Config:     (*d.Config)(&dr.dockercfg.Config),
-		HostConfig: (*d.HostConfig)(&dr.dockercfg.HostConfig)})
+	dcc := m.DockerCreateConfig{}
+	dcc.Config = (*container.Config)(&dr.dockercfg.Config)
+	dcc.HostConfig = (*container.HostConfig)(&dr.dockercfg.HostConfig)
+	cc.MergeWithOverwrite(dcc)
 	return nil
 }
 

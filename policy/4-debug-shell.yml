@@ -23,6 +23,6 @@ policy-source:
         docker-config:
           priority: 800
           host-config:
-            NetworkMode: "none"
-            Dns:
+            networkmode: "none"
+            dns:
               - "1.1.0.252"
